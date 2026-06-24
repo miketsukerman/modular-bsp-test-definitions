@@ -25,5 +25,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/spi
+    - export SPI_COUNT SPI0_DEV
     - bash spi.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

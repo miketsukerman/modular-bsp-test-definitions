@@ -28,5 +28,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/tpm
+    - export TPM_COUNT TPM0_DEV TPM0_VERSION TPM0_MANUF1 TPM0_MANUF2 TPM0_CAPS
     - bash tpm.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

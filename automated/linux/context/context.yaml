@@ -24,5 +24,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/context
+    - export DISTRO_ID DISTRO_VER KERNEL_MIN_VER CPU_MODEL BIOS_DATE
     - bash context.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

@@ -33,5 +33,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/can
+    - export CAN_COUNT CAN0_DEV CAN0_BUS CAN0_BUS_ID CAN0_CLOCK CAN0_LOOPBACK_SPEEDS CAN_EXT_LOOPBACK
     - bash can.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

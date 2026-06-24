@@ -25,5 +25,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/thermal
+    - export THERMAL_COUNT TZ0_DEV TZ0_MIN TZ0_MAX
     - bash thermal.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

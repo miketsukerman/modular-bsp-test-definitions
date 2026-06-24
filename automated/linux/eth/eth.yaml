@@ -38,5 +38,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/eth
+    - export ETH_COUNT ETH0_DEV ETH0_BUS ETH0_BUS_ID ETH0_LINK ETH0_WOL_FEATURED ETH0_WOL_WAKEUP ETH0_MIN_TX_SPEED ETH0_MIN_RX_SPEED IPERF3_SERVER_IP IPERF3_DURATION DNS_CHECK_HOSTS PING_CHECK_HOSTS
     - bash eth.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

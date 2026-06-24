@@ -27,5 +27,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/cpu
+    - export CPU_MODEL CPU_NPROC CPU_CSTATES CPU_SCALING_MIN CPU_SCALING_MAX CPU_SCALING_GOVERNORS CPU_SUSPENSION_STATES
     - bash cpu.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

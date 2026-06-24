@@ -25,5 +25,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/i2c
+    - export I2C_COUNT I2C0_DEV I2C0_CONTROLLER I2C0_REFERENCE
     - bash i2c.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

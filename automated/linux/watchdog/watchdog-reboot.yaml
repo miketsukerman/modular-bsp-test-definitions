@@ -24,5 +24,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/watchdog
+    - export WATCHDOG_DEV WATCHDOG_TIMEOUT_S
     - bash watchdog-reboot.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

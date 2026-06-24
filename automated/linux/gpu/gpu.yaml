@@ -41,5 +41,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/gpu
+    - export GPU_COUNT GPU0_DRI_KMS_DEV GPU0_BACKLIGHT_DEV GPU0_LVDS_MOD GPU0_LVDS_DEV GPU0_DRM_CONNECTOR GPU0_DRM_CONNECTOR_ENCODER GPU0_RESOLUTION GPU0_REFRESH_RATE GPU_WAYLAND GPU_VA_CODECS SKIP_INSTALL
     - bash gpu.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt
