@@ -64,15 +64,36 @@ fi
 
 # ─── Memory stability test ────────────────────────────────────────────────────
 
-# Use 90% of available free RAM (in MiB)
-kib=$(awk '/MemAvailable/ {print int($2 * 0.9)}' /proc/meminfo)
+: "${RAM_STABILITY_FRACTION:=50}"   # Percentage of MemAvailable to test
+: "${RAM_STABILITY_MAX_MB:=256}"    # Hard upper bound on test size (MiB)
+: "${RAM_STABILITY_TIMEOUT:=300}"   # Max seconds for memtester before aborting
+
+# Test a bounded fraction of free RAM. Using a small, capped region keeps the
+# run time predictable and avoids OOM/swap thrash from grabbing most of memory.
+kib=$(awk -v f="${RAM_STABILITY_FRACTION}" '/MemAvailable/ {print int($2 * f / 100)}' /proc/meminfo)
 mib=$(( (kib + 0) / 1024 ))
 
+if [ "${mib}" -gt "${RAM_STABILITY_MAX_MB}" ]; then
+    mib="${RAM_STABILITY_MAX_MB}"
+fi
+
 if [ "${mib}" -gt 0 ]; then
-    # Try memtester first, fall back to a simple dd-based check
     if chk_cmd memtester; then
-        if memtester "${mib}M" 1 >/dev/null 2>&1; then
+        # Bound the run with timeout and keep console output flowing so LAVA
+        # sees progress and never appears to hang.
+        if chk_cmd timeout; then
+            timeout "${RAM_STABILITY_TIMEOUT}" memtester "${mib}M" 1
+            rc=$?
+        else
+            memtester "${mib}M" 1
+            rc=$?
+        fi
+
+        if [ "${rc}" -eq 0 ]; then
             report_pass "L-RAM-STABILITY-F"
+        elif [ "${rc}" -eq 124 ]; then
+            warn_msg "memtester exceeded ${RAM_STABILITY_TIMEOUT}s timeout; reporting fail"
+            report_fail "L-RAM-STABILITY-F"
         else
             report_fail "L-RAM-STABILITY-F"
         fi
