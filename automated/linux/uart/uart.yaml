@@ -33,5 +33,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/uart
+    - export UART_COUNT UART0_DEV UART0_BUS UART0_BUS_ID UART0_HWFC UART0_DEBUG_CONSOLE UART0_LOOPBACK_TEST UART0_REFERENCE
     - bash uart.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

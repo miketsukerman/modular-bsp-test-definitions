@@ -30,5 +30,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/disk
+    - export DISK_COUNT DISK_ROOTFS_MOUNT DISK0_DEV DISK0_TYPE DISK0_SECTORS DISK0_MIN_RS DISK0_MIN_WS
     - bash disk.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

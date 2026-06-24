@@ -27,5 +27,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/pwm
+    - export PWM_COUNT PWM0_DEV PWM0_BUS PWM0_BUS_ID PWM0_REFERENCE PWM_BACKLIGHT_DEV
     - bash pwm.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

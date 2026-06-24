@@ -22,5 +22,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/optee
+    - export OPTEE_DEV OPTEE_FULL_TEST
     - bash optee.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

@@ -26,5 +26,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/rtc
+    - export RTC_COUNT RTC0_DEV RTC0_WAKEUP
     - bash rtc.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

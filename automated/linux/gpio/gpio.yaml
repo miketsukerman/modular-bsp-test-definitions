@@ -31,5 +31,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/gpio
+    - export GPIO_COUNT GPIO0_DEV GPIO0_CHIP GPIO0_CONTROLLER GPIO0_NLINES GPIO_PINS
     - bash gpio.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

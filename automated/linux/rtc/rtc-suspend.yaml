@@ -25,5 +25,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/rtc
+    - export RTC_DEV SLEEP_STATE WAKE_SLEEP_TIME_S
     - bash rtc-suspend.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

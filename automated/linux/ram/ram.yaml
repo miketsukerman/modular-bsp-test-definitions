@@ -25,5 +25,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/ram
+    - export RAM_SLOT_COUNT RAM_SLOT0_SIZE RAM_SLOT0_SPEED RAM_MIN_AVAIL
     - bash ram.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

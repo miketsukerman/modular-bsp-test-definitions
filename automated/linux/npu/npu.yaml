@@ -27,5 +27,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/npu
+    - export NPU_COUNT NPU0_DEV NPU0_BUS NPU0_BUS_ID NPU0_BUS_DEVICE_TYPE NPU0_BUS_NODE_NAME
     - bash npu.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

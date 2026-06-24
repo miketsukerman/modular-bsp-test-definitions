@@ -33,5 +33,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/usb
+    - export USB_DEV_COUNT USB_DEV0_PORT USB_DEV0_DRIVER USB_DEV0_SPEED USB_OTG_ENABLED USB_OTG_CONF
     - bash usb.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

@@ -37,5 +37,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/audio
+    - export AUDIO_PLAYBACK_COUNT AUDIO_CAPTURE_COUNT AUDIO_PB0_CARD AUDIO_PB0_CONTROLLER AUDIO_PB0_DEV_ID AUDIO_PB0_CODEC AUDIO_CAP0_CARD AUDIO_CAP0_CONTROLLER AUDIO_CAP0_DEV_ID AUDIO_CAP0_CODEC
     - bash audio.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

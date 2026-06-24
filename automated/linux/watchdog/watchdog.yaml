@@ -24,5 +24,6 @@ params:
 run:
   steps:
     - cd ./automated/linux/watchdog
+    - export WATCHDOG_COUNT WATCHDOG0_DEV
     - bash watchdog.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt
