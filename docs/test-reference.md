@@ -7,6 +7,9 @@ module you'll find:
 * **Test cases** – the LAVA test-case IDs the module emits (sanitised form, see
   the [README](../README.md#test-case-id-conventions)).
 
+To add a new module or test case, see
+[`extending-tests.md`](extending-tests.md).
+
 Conventions used below:
 
 * `N` / `${n}` – a zero-based instance index (`i2c0`, `eth1`, …). Modules with a
