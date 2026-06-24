@@ -72,7 +72,9 @@ automated/linux/
 | watchdog        | `watchdog.yaml`, `watchdog-reboot.yaml`| Watchdog node, daemon running; reboot test (separate job) |
 
 See [`docs/test-reference.md`](docs/test-reference.md) for the full per-module
-parameter reference and the list of LAVA test-case IDs each module emits.
+parameter reference and the list of LAVA test-case IDs each module emits, and
+[`docs/lava-usage.md`](docs/lava-usage.md) for how to assemble these modules
+into a complete LAVA job (with a full annotated job example).
 
 > **Disruptive tests run as separate jobs.** `rtc-suspend` and
 > `watchdog-reboot` change the board's power state (suspend/reboot) and are
