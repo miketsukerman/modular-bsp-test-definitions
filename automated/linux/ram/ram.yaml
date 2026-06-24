@@ -20,6 +20,9 @@ params:
   RAM_SLOT0_SIZE: "1024"       # Expected slot 0 size in MB
   RAM_SLOT0_SPEED: ""          # Expected slot 0 speed in MT/s (empty = skip)
   RAM_MIN_AVAIL: "800"         # Minimum reported MemTotal in MiB
+  RAM_STABILITY_FRACTION: "50" # Percentage of MemAvailable to memtest
+  RAM_STABILITY_MAX_MB: "256"  # Hard upper bound on memtest size (MiB)
+  RAM_STABILITY_TIMEOUT: "300" # Max seconds for memtester before aborting
   # RAM_SLOT1_SIZE, RAM_SLOT1_SPEED, … for additional slots
 
 run:
