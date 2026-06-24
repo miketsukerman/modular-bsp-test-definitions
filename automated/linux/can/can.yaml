@@ -19,6 +19,7 @@ metadata:
     - "CAN external loopback (L-CAN-EXT-LOOP:F) requires two CAN ports wired together"
 
 params:
+  ADV_VERBOSE: "1"             # 1 = capture per-test-case command output into LAVA logs, 0 = quiet
   CAN_COUNT: "1"               # Number of CAN interfaces
 
   CAN0_DEV: "can0"
@@ -34,5 +35,6 @@ run:
   steps:
     - cd ./automated/linux/can
     - export CAN_COUNT CAN0_DEV CAN0_BUS CAN0_BUS_ID CAN0_CLOCK CAN0_LOOPBACK_SPEEDS CAN_EXT_LOOPBACK
+    - export ADV_VERBOSE
     - bash can.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

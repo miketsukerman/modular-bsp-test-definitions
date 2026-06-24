@@ -17,6 +17,7 @@ metadata:
     - all
 
 params:
+  ADV_VERBOSE: "1"             # 1 = capture per-test-case command output into LAVA logs, 0 = quiet
   DISK_COUNT: "1"              # Number of block devices to check
   DISK_ROOTFS_MOUNT: ""        # Space-separated "<dev>:<mode>:<label>" entries (empty = skip)
 
@@ -31,5 +32,6 @@ run:
   steps:
     - cd ./automated/linux/disk
     - export DISK_COUNT DISK_ROOTFS_MOUNT DISK0_DEV DISK0_TYPE DISK0_SECTORS DISK0_MIN_RS DISK0_MIN_WS
+    - export ADV_VERBOSE
     - bash disk.sh
     - bash ../utils/send-to-lava.sh ./output/result.txt

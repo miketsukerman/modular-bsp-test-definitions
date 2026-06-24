@@ -55,7 +55,10 @@ file_read_test() {
     drop_caches
     local out
     out=$(dd if="${dev}" of="${tmpf}" bs="${bsz}" count="${cnt}" \
-             iflag=direct 2>&1 | tail -1)
+             iflag=direct 2>&1)
+    log_msg "${req_id}" "read dd ${dev} bs=${bsz} count=${cnt}:"
+    log_msg "${req_id}" "${out}"
+    out=$(printf '%s\n' "${out}" | tail -1)
     local sp
     sp=$(echo "${out}" | awk '{print $(NF-1)}')
     local unit
@@ -93,7 +96,10 @@ fs_write_test() {
     drop_caches
     local out
     out=$(dd if=/dev/urandom of="${tmpf}" bs="${bsz}" count="${cnt}" \
-             oflag=sync 2>&1 | tail -1)
+             oflag=sync 2>&1)
+    log_msg "${req_id}" "write dd ${part} bs=${bsz} count=${cnt}:"
+    log_msg "${req_id}" "${out}"
+    out=$(printf '%s\n' "${out}" | tail -1)
     rm -f "${tmpf}"
     umount "${mnt}" 2>/dev/null
     rmdir "${mnt}"
@@ -147,6 +153,7 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
         if [ "${rs}" -eq "${sectors}" ]; then
             report_pass "L-DISK-SECTORS-disk${n}"
         else
+            log_msg "L-DISK-SECTORS-disk${n}" "${dev} sectors: expected ${sectors}, found ${rs}"
             report_fail "L-DISK-SECTORS-disk${n}"
         fi
     fi
@@ -156,6 +163,7 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
     if [ "${tdt}" = "${dtype}" ]; then
         report_pass "L-DISK-TYPE-disk${n}"
     else
+        log_msg "L-DISK-TYPE-disk${n}" "${dev} type: expected '${dtype}', found '${tdt}'"
         report_fail "L-DISK-TYPE-disk${n}"
     fi
 

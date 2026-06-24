@@ -60,11 +60,15 @@ can_loopback_test() {
             header=$(awk '{print $2}' <<< "${r}")
             data=$(awk -F] '{print $2}' <<< "${r}")
             f2=$(echo "${header}#${data}" | sed 's/ //g')
+            log_msg "${req_id}" "${type} ${src}->${tgt} @ ${bitrate}: sent '${frame}', received '${f2}'"
             [ "${f2}" = "${frame}" ] && ok=1 || ok=0
         else
             ok=0
+            log_msg "${req_id}" "${type} ${src}->${tgt} @ ${bitrate}: cansend failed"
             wait "${CANDUMP_PID}" 2>/dev/null || true
         fi
+    else
+        log_msg "${req_id}" "${type} ${src}->${tgt} @ ${bitrate}: failed to configure/bring up interface"
     fi
 
     # Cleanup
@@ -114,6 +118,7 @@ while [ "${n}" -lt "${CAN_COUNT}" ]; do
         if [ "${cfound}" = "${clock}" ]; then
             report_pass "${req_clock}"
         else
+            log_msg "${req_clock}" "${iface} clock: expected ${clock} Hz, found '${cfound}' Hz"
             report_fail "${req_clock}"
         fi
     fi

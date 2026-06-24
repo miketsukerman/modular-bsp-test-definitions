@@ -46,6 +46,9 @@ command -v lava-test-set  > /dev/null 2>&1
 lava_test_set="$?"
 
 if [ -f "${RESULT_FILE}" ]; then
+    echo "INFO: result summary from ${RESULT_FILE}:"
+    cat "${RESULT_FILE}"
+    echo "INFO: end of result summary"
     while IFS= read -r line; do
         if echo "${line}" | grep -iqE ".* +(pass|fail|skip|unknown)$"; then
             test="${line%% *}"

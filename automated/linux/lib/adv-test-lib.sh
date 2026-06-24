@@ -40,30 +40,73 @@ lava_id() {
     printf '%s' "$1" | sed 's/·/-/g; s/:/-/g'
 }
 
+# ─── Verbose per-test-case logging ──────────────────────────────────────────
+#
+# When ADV_VERBOSE is non-zero (the default), command output and context
+# messages are captured into a per-test-case file ${OUTPUT}/<lava_id>.log.
+# send-to-lava.sh emits the contents of that file between
+# LAVA_SIGNAL_STARTTC/ENDTC, so the LAVA job log shows full diagnostics for
+# every test case instead of a bare pass/fail line. Set ADV_VERBOSE=0 to keep
+# the old quiet behaviour.
+
+: "${ADV_VERBOSE:=1}"
+export ADV_VERBOSE
+
+# log_for <req_id> — echo the canonical per-test-case log path.
+log_for() {
+    printf '%s/%s.log' "${OUTPUT}" "$(lava_id "$1")"
+}
+
+# log_msg <req_id> <message…> — append a context line to the id's log
+# (e.g. expected vs actual values, device paths, parameters).
+log_msg() {
+    [ "${ADV_VERBOSE}" -ne 0 ] 2>/dev/null || return 0
+    local id logf
+    id="$1"; shift
+    logf=$(log_for "${id}")
+    mkdir -p "$(dirname "${logf}")"
+    printf '%s\n' "$*" >> "${logf}"
+}
+
+# _log_result <req_id> <result> [extra…] — append the final outcome line.
+_log_result() {
+    [ "${ADV_VERBOSE}" -ne 0 ] 2>/dev/null || return 0
+    local id="$1" result="$2"
+    shift 2
+    local logf
+    logf=$(log_for "${id}")
+    mkdir -p "$(dirname "${logf}")"
+    printf 'RESULT: %s %s %s\n' "$(lava_id "${id}")" "${result}" "$*" >> "${logf}"
+}
+
 # ─── Result reporters ────────────────────────────────────────────────────────
 
 report_pass() {
     local id
     id=$(lava_id "$1")
     echo "${id} pass" | tee -a "${RESULT_FILE}"
+    _log_result "$1" pass
 }
 
 report_fail() {
     local id
     id=$(lava_id "$1")
     echo "${id} fail" | tee -a "${RESULT_FILE}"
+    _log_result "$1" fail
 }
 
 report_skip() {
     local id
     id=$(lava_id "$1")
     echo "${id} skip" | tee -a "${RESULT_FILE}"
+    _log_result "$1" skip
 }
 
 report_unknown() {
     local id
     id=$(lava_id "$1")
     echo "${id} unknown" | tee -a "${RESULT_FILE}"
+    _log_result "$1" unknown
 }
 
 # report_metric <req_id> <pass|fail|skip> <measurement> [units]
@@ -80,6 +123,7 @@ report_metric() {
     else
         echo "${id} ${result} ${measurement}" | tee -a "${RESULT_FILE}"
     fi
+    _log_result "$1" "${result}" "measurement=${measurement} ${units}"
 }
 
 # run_adv_test <req_id> <shell-command…>
@@ -94,6 +138,31 @@ run_adv_test() {
         report_fail "$id"
         return 1
     fi
+}
+
+# run_logged <req_id> <command…>
+# Like run_adv_test, but captures the command's stdout+stderr into the test
+# case's log (${OUTPUT}/<lava_id>.log) instead of discarding it, so the output
+# is surfaced in the LAVA job log. Reports pass on exit 0, fail otherwise.
+run_logged() {
+    local id="$1"
+    shift
+    local rc logf
+    if [ "${ADV_VERBOSE}" -ne 0 ] 2>/dev/null; then
+        logf=$(log_for "${id}")
+        mkdir -p "$(dirname "${logf}")"
+        { printf '+ %s\n' "$*"; "$@" 2>&1; } >> "${logf}"
+        rc=$?
+    else
+        "$@" >/dev/null 2>&1
+        rc=$?
+    fi
+    if [ "${rc}" -eq 0 ]; then
+        report_pass "${id}"
+    else
+        report_fail "${id}"
+    fi
+    return "${rc}"
 }
 
 # ─── Root / privilege check ──────────────────────────────────────────────────
