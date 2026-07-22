@@ -102,8 +102,8 @@ while [ "${n}" -lt "${tnp_max}" ]; do
     avail_gov="${cpufreq}/scaling_available_governors"
 
     for gov in ${CPU_SCALING_GOVERNORS}; do
-        avail=$(cat "${avail_gov}" 2>/dev/null | xargs -n1)
-        verbose_log "L-CPU-SCALING-GOVERNOR-${k}" "Available governors: $(cat "${avail_gov}" 2>/dev/null); testing '${gov}'"
+        avail=$(xargs -n1 < "${avail_gov}" 2>/dev/null)
+        verbose_log "L-CPU-SCALING-GOVERNOR-${k}" "Available governors: $(tr '\n' ' ' < "${avail_gov}" 2>/dev/null); testing '${gov}'"
         found_gov=$(echo "${avail}" | grep -w "${gov}" | head -1)
         if [ "${found_gov}" = "${gov}" ]; then
             report_pass "L-CPU-SCALING-GOVERNOR-${k}"

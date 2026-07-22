@@ -19,6 +19,12 @@ Conventions used below:
   hardware prerequisites or parameters are missing.
 * `${label}` in an ID is the per-instance device label (e.g. `eth0`).
 
+### Common parameter (all modules)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `VERBOSE` | `"0"` | Set to `"1"` to enable verbose diagnostic logging. When enabled, each test case writes an `output/<id>.log` file containing `INFO:` banners, raw command output, and a `RESULT:` summary line. These log files are picked up by `send-to-lava.sh` and surfaced inside LAVA results. |
+
 ---
 
 ## audio (`adv-audio`)

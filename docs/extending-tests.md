@@ -69,6 +69,7 @@ params:
   FOO0_DEV: "/dev/foo0"    # Device node for instance 0
   FOO0_EXPECTED: ""         # Expected value (empty -> that sub-check is skipped)
   # FOO1_DEV, FOO1_EXPECTED, … for additional instances
+  VERBOSE: "0"              # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:
@@ -148,6 +149,56 @@ sanitisation consistent. The most-used ones:
 | `chk_cmd <cmd>` | True if a command exists in `PATH`. |
 | `chk_rw_cdev / chk_rw_bdev <path>` | Char/block device exists and is R/W. |
 | `chk_bus pci\|soc …` | Verify a bus controller exists. |
+| `verbose_log <id> <msg>` | Append an `INFO:` line to `output/<id>.log` and stderr when `VERBOSE=1`. |
+| `verbose_cmd <id> <cmd…>` | Run a command, capture its output to `output/<id>.log` and stderr when `VERBOSE=1`. |
+
+### Verbose logging
+
+Every module accepts a `VERBOSE` parameter (default `"0"`).  Set `VERBOSE=1`
+in the YAML `parameters:` override of your LAVA job (or as an environment
+variable when running locally) to enable diagnostic output.
+
+When `VERBOSE=1`:
+
+* `verbose_log <id> <message>` writes an `INFO:` banner to both stderr *and*
+  the per-test-case log file `output/<id>.log`.
+* `verbose_cmd <id> <cmd…>` runs the command and tees its combined
+  stdout+stderr to `output/<id>.log` and to stderr.
+* Each `report_pass/fail/skip/unknown/metric` call appends a `RESULT:` summary
+  line to the same log file.
+
+`send-to-lava.sh` already reads `output/<id>.log` for each test case and wraps
+its contents between `LAVA_SIGNAL_STARTTC` / `LAVA_SIGNAL_ENDTC` markers, so
+all diagnostic content is surfaced inside the LAVA test result without any
+extra configuration.
+
+**Pattern to follow in new modules:**
+
+```bash
+# Before a check — describe what we are about to examine
+verbose_log "${req_dev}" "Checking device node ${dev}"
+if chk_rw_cdev "${dev}"; then
+    report_pass "${req_dev}"
+else
+    report_fail "${req_dev}"
+    n=$((n + 1))
+    continue
+fi
+
+# For checks that run an external tool — also capture its raw output
+verbose_log "${req_ctrl}" "Running some_tool (looking for ${expected})"
+verbose_cmd "${req_ctrl}" some_tool --option "${dev}"
+if some_tool --option "${dev}" 2>/dev/null | grep -q "${expected}"; then
+    report_pass "${req_ctrl}"
+else
+    report_fail "${req_ctrl}"
+fi
+```
+
+**Guidelines for high-volume commands** (e.g. `xtest`, `memtester`):
+use `tail -n N` to limit captured output to the last N lines so log files
+stay small, or log only the key summary value rather than the full output.
+See `optee.sh` for an example.
 
 ### Test-case ID conventions
 
@@ -241,8 +292,9 @@ a job with other tests. Split it into its own module/job pair — see how
 
 ## Checklist
 
-- [ ] `automated/linux/foo/foo.yaml` with `metadata`, `params` (defaults), and the standard 3-step `run`.
+- [ ] `automated/linux/foo/foo.yaml` with `metadata`, `params` (defaults, including `VERBOSE: "0"`), and the standard 3-step `run`.
 - [ ] `automated/linux/foo/foo.sh` sourcing `adv-test-lib.sh`, using `report_*` helpers and `L-` IDs.
+- [ ] Verbose-logging added: `verbose_log` before each check; `verbose_cmd` for external tools.
 - [ ] Functional (`:F`) checks degrade to `report_skip` when prerequisites are absent.
 - [ ] Runs locally and `output/result.txt` looks correct; `shellcheck` is clean.
 - [ ] (Optional) Registered in `tools/conf_to_yaml.py`.

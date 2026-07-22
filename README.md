@@ -12,7 +12,9 @@ self-contained module made of:
 
 Modules are parameterised entirely through the YAML `params` block, so the same
 test logic runs unchanged across different boards — only the parameter values
-(populated per board) change.
+(populated per board) change.  Every module accepts a `VERBOSE` parameter
+(default `"0"`); set it to `"1"` to enable per-test-case diagnostic log files
+that are captured and surfaced by LAVA.
 
 ## Repository layout
 
