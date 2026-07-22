@@ -176,6 +176,9 @@ extra configuration.
 
 ```bash
 # Before a check — describe what we are about to examine
+eval "dev=\${FOO${n}_DEV}"
+eval "expected=\${FOO${n}_EXPECTED}"
+
 verbose_log "${req_dev}" "Checking device node ${dev}"
 if chk_rw_cdev "${dev}"; then
     report_pass "${req_dev}"
