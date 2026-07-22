@@ -60,8 +60,21 @@ fi
 # ─── CPU model ───────────────────────────────────────────────────────────────
 
 if [ -n "${CPU_MODEL}" ]; then
-    cpu_model=$(grep -m1 'Model name\|Hardware\|cpu model' /proc/cpuinfo 2>/dev/null |
-                awk -F: '{print $2}' | xargs)
+    cpu_model=""
+    if [ -r /proc/cpuinfo ]; then
+        cpu_model=$(grep -m1 -E '^(Model name|Hardware|cpu model|Processor|CPU model):' /proc/cpuinfo 2>/dev/null |
+                    awk -F: '{print $2}' | xargs)
+    fi
+    if [ -z "${cpu_model}" ] && command -v lscpu >/dev/null 2>&1; then
+        cpu_model=$(lscpu 2>/dev/null | awk -F: '/^[[:space:]]*Model name:/ {print $2; exit}' | xargs)
+    fi
+    if [ -z "${cpu_model}" ] && [ -r /proc/device-tree/model ]; then
+        cpu_model=$(tr -d '\0' < /proc/device-tree/model 2>/dev/null | xargs)
+    fi
+    if [ -z "${cpu_model}" ]; then
+        cpu_model=$(uname -m 2>/dev/null)
+    fi
+
     verbose_log "L-CPU-MODEL" "CPU model: found='${cpu_model}' expected='${CPU_MODEL}'"
     if echo "${cpu_model}" | grep -qi "${CPU_MODEL}"; then
         report_pass "L-CPU-MODEL"
