@@ -20,6 +20,7 @@ params:
   KERNEL_MIN_VER: "6.6"        # Minimum kernel version, e.g. "6.6"
   CPU_MODEL: ""                 # Expected CPU model string (empty = skip)
   BIOS_DATE: ""                 # Expected BIOS date YYYYMMDD (empty = skip)
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

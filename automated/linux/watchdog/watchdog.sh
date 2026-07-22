@@ -20,6 +20,7 @@ n=0
 while [ "${n}" -lt "${WATCHDOG_COUNT}" ]; do
     eval "dev=\${WATCHDOG${n}_DEV}"
 
+    verbose_log "L-WATCHDOG-DEV-watchdog${n}" "Checking watchdog device node ${dev}"
     if chk_rw_cdev "${dev}"; then
         report_pass "L-WATCHDOG-DEV-watchdog${n}"
     else
@@ -30,6 +31,7 @@ while [ "${n}" -lt "${WATCHDOG_COUNT}" ]; do
 done
 
 # Watchdog daemon running
+verbose_log "L-WATCHDOG-SERVICE" "Checking for running watchdog daemon"
 if pgrep watchdog >/dev/null 2>&1; then
     report_pass "L-WATCHDOG-SERVICE"
 else

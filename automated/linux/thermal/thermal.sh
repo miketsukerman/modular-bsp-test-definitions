@@ -25,6 +25,7 @@ while [ "${n}" -lt "${THERMAL_COUNT}" ]; do
     tf="/sys/class/thermal/${dev}/temp"
     req_id="L-THERMAL-ZONE-DEV-tz${n}"
 
+    verbose_log "${req_id}" "Checking thermal zone ${dev} at ${tf}"
     if [ ! -e "${tf}" ]; then
         report_fail "${req_id}"
         n=$((n + 1))
@@ -34,6 +35,7 @@ while [ "${n}" -lt "${THERMAL_COUNT}" ]; do
 
     raw=$(cat "${tf}" 2>/dev/null)
     temp=$(( (raw + 0) / 1000 ))
+    verbose_log "L-THERMAL-ZONE-TEMP-tz${n}" "Temperature: ${temp}°C (raw=${raw}) range=[${min}, ${max}]°C"
 
     if [ "${temp}" -ge "${min}" ]; then
         report_pass "L-THERMAL-ZONE-MIN-tz${n}"

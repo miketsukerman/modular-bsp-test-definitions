@@ -32,6 +32,7 @@ while [ "${n}" -lt "${GPIO_COUNT}" ]; do
     req_ctrl="L-GPIO-CONTROLLER-${label}"
     req_lines="L-GPIO-LINES-${label}"
 
+    verbose_log "${req_dev}" "Checking GPIO device node ${dev}"
     if chk_rw_cdev "${dev}"; then
         report_pass "${req_dev}"
     else
@@ -43,6 +44,7 @@ while [ "${n}" -lt "${GPIO_COUNT}" ]; do
     # Chip sysfs entry
     if [ -n "${chip}" ]; then
         ce="/sys/class/gpio/${chip}"
+        verbose_log "${req_chip}" "Checking sysfs entry ${ce}"
         if [ -e "${ce}" ]; then
             report_pass "${req_chip}"
         else
@@ -52,6 +54,7 @@ while [ "${n}" -lt "${GPIO_COUNT}" ]; do
         # Controller label
         if [ -n "${controller}" ]; then
             tlabel=$(cat "${ce}/label" 2>/dev/null)
+            verbose_log "${req_ctrl}" "GPIO chip label: found='${tlabel}' expected='${controller}'"
             if [ "${controller}" = "${tlabel}" ]; then
                 report_pass "${req_ctrl}"
             else
@@ -63,7 +66,10 @@ while [ "${n}" -lt "${GPIO_COUNT}" ]; do
     # Line count
     if [ "${nlines}" -gt 0 ] 2>/dev/null && chk_cmd gpioinfo; then
         iface=$(basename "${dev}")
+        verbose_log "${req_lines}" "Querying GPIO line count for ${iface} (expected: ${nlines})"
+        verbose_cmd "${req_lines}" gpioinfo
         nla=$(gpioinfo 2>/dev/null | grep "^${iface}" | awk '{print $3}')
+        verbose_log "${req_lines}" "GPIO line count: found=${nla} expected=${nlines}"
         if echo "${nla}" | grep -qE '^[0-9]+$' && [ "${nlines}" -eq "${nla}" ] 2>/dev/null; then
             report_pass "${req_lines}"
         else
@@ -103,6 +109,7 @@ for pin_spec in ${GPIO_PINS}; do
     fi
 
     dfound=$(cat "${dpath}" 2>/dev/null)
+    verbose_log "L-GPIO-INPUT" "Pin ${pin} (${pin_label}): direction found='${dfound}' expected='${direction}'"
 
     if [ "${direction}" = "out" ]; then
         req_dir="L-GPIO-OUTPUT"
@@ -120,6 +127,7 @@ for pin_spec in ${GPIO_PINS}; do
         case "${direction}" in
         in)
             val=$(cat "${vpath}" 2>/dev/null)
+            verbose_log "L-GPIO-SENSED" "Pin ${pin} (${pin_label}): read value='${val}'"
             if [ -n "${val}" ]; then
                 report_pass "L-GPIO-SENSED"
             else
@@ -128,6 +136,7 @@ for pin_spec in ${GPIO_PINS}; do
             ;;
         out)
             for v in 0 1; do
+                verbose_log "L-GPIO-SET-HIGH-LOW" "Pin ${pin} (${pin_label}): writing value ${v}"
                 if echo "${v}" > "${vpath}" 2>/dev/null; then
                     report_pass "L-GPIO-SET-HIGH-LOW"
                 else
@@ -139,12 +148,14 @@ for pin_spec in ${GPIO_PINS}; do
     fi
 
     if [ -n "${edge}" ]; then
+        verbose_log "L-GPIO-INT-SOURCE" "Pin ${pin} (${pin_label}): checking edge file ${epath}"
         if [ -e "${epath}" ]; then
             report_pass "L-GPIO-INT-SOURCE"
         else
             report_fail "L-GPIO-INT-SOURCE"
         fi
         efound=$(cat "${epath}" 2>/dev/null)
+        verbose_log "L-GPIO-INTERRUPT" "Pin ${pin} (${pin_label}): edge found='${efound}' expected='${edge}'"
         if [ "${efound}" = "${edge}" ]; then
             report_pass "L-GPIO-INTERRUPT"
         else

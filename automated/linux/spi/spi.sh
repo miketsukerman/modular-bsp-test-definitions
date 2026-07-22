@@ -23,6 +23,7 @@ while [ "${n}" -lt "${SPI_COUNT}" ]; do
     req_dev="L-SPI-DEV-spi${n}"
     req_test="L-SPI-DEV-TEST-F-spi${n}"
 
+    verbose_log "${req_dev}" "Checking SPI device node ${dev}"
     if chk_rw_cdev "${dev}"; then
         report_pass "${req_dev}"
     else
@@ -33,6 +34,8 @@ while [ "${n}" -lt "${SPI_COUNT}" ]; do
 
     # Functional loopback test – requires physical MOSI-MISO bridge
     if chk_cmd spidev_test; then
+        verbose_log "${req_test}" "Running spidev_test loopback on ${dev}"
+        verbose_cmd "${req_test}" spidev_test -D "${dev}"
         if spidev_test -D "${dev}" >/dev/null 2>&1; then
             report_pass "${req_test}"
         else

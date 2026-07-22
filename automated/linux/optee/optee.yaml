@@ -18,6 +18,7 @@ metadata:
 params:
   OPTEE_DEV: "/dev/tee0"
   OPTEE_FULL_TEST: "0"         # 0 = quick xtest (skip suite 1001), 1 = full suite
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

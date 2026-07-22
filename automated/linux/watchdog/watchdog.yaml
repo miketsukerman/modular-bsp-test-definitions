@@ -20,6 +20,7 @@ params:
   WATCHDOG_COUNT: "1"          # Number of watchdog devices
   WATCHDOG0_DEV: "/dev/watchdog0"
   # WATCHDOG1_DEV, … for additional devices
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

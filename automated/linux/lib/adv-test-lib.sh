@@ -23,9 +23,50 @@ export LANG
 : "${RESULT_FILE:=${OUTPUT}/result.txt}"
 export OUTPUT RESULT_FILE
 
+# ─── Verbose-logging toggle ──────────────────────────────────────────────────
+#
+# Set VERBOSE=1 (or pass it via the YAML params block) to enable per-test-case
+# diagnostic log files and real-time progress banners.  When VERBOSE=0 (the
+# default) all output from diagnostic commands is suppressed, matching the
+# previous behaviour exactly.
+
+: "${VERBOSE:=0}"
+export VERBOSE
+
 create_out_dir() {
     local dir="${1:-${OUTPUT}}"
     mkdir -p "$dir"
+}
+
+# ─── Verbose helpers ─────────────────────────────────────────────────────────
+#
+# verbose_log <id> <message>
+#   When VERBOSE=1: appends an INFO line to the per-test log file
+#   (OUTPUT/<lava_id>.log) and echoes it to stderr.  No-op otherwise.
+#
+# verbose_cmd <id> <cmd…>
+#   When VERBOSE=1: runs the command, tees combined stdout+stderr to the
+#   per-test log file and to stderr, then returns the command's exit code.
+#   No-op (returns 0) when VERBOSE=0.
+
+verbose_log() {
+    [ "${VERBOSE}" = "1" ] || return 0
+    local id logf
+    id=$(lava_id "$1")
+    logf="${OUTPUT}/${id}.log"
+    shift
+    printf 'INFO: %s\n' "$*" | tee -a "${logf}" >&2
+}
+
+verbose_cmd() {
+    [ "${VERBOSE}" = "1" ] || return 0
+    local id logf rc
+    id=$(lava_id "$1")
+    logf="${OUTPUT}/${id}.log"
+    shift
+    "$@" 2>&1 | tee -a "${logf}" >&2
+    rc=${PIPESTATUS[0]}
+    return "${rc}"
 }
 
 # ─── LAVA test-case ID sanitisation ─────────────────────────────────────────
@@ -46,24 +87,36 @@ report_pass() {
     local id
     id=$(lava_id "$1")
     echo "${id} pass" | tee -a "${RESULT_FILE}"
+    if [ "${VERBOSE}" = "1" ]; then
+        printf 'RESULT: pass\n' | tee -a "${OUTPUT}/${id}.log" >&2
+    fi
 }
 
 report_fail() {
     local id
     id=$(lava_id "$1")
     echo "${id} fail" | tee -a "${RESULT_FILE}"
+    if [ "${VERBOSE}" = "1" ]; then
+        printf 'RESULT: fail\n' | tee -a "${OUTPUT}/${id}.log" >&2
+    fi
 }
 
 report_skip() {
     local id
     id=$(lava_id "$1")
     echo "${id} skip" | tee -a "${RESULT_FILE}"
+    if [ "${VERBOSE}" = "1" ]; then
+        printf 'RESULT: skip\n' | tee -a "${OUTPUT}/${id}.log" >&2
+    fi
 }
 
 report_unknown() {
     local id
     id=$(lava_id "$1")
     echo "${id} unknown" | tee -a "${RESULT_FILE}"
+    if [ "${VERBOSE}" = "1" ]; then
+        printf 'RESULT: unknown\n' | tee -a "${OUTPUT}/${id}.log" >&2
+    fi
 }
 
 # report_metric <req_id> <pass|fail|skip> <measurement> [units]
@@ -80,19 +133,39 @@ report_metric() {
     else
         echo "${id} ${result} ${measurement}" | tee -a "${RESULT_FILE}"
     fi
+    if [ "${VERBOSE}" = "1" ]; then
+        if [ -n "$units" ]; then
+            printf 'RESULT: %s  measurement=%s %s\n' \
+                "${result}" "${measurement}" "${units}" | tee -a "${OUTPUT}/${id}.log" >&2
+        else
+            printf 'RESULT: %s  measurement=%s\n' \
+                "${result}" "${measurement}" | tee -a "${OUTPUT}/${id}.log" >&2
+        fi
+    fi
 }
 
 # run_adv_test <req_id> <shell-command…>
 # Evaluates the command; reports pass if exit-0, fail otherwise.
+# When VERBOSE=1 the command's output is captured to the per-test log file.
 run_adv_test() {
     local id="$1"
     shift
-    if "$@" >/dev/null 2>&1; then
-        report_pass "$id"
-        return 0
+    if [ "${VERBOSE}" = "1" ]; then
+        if verbose_cmd "${id}" "$@"; then
+            report_pass "$id"
+            return 0
+        else
+            report_fail "$id"
+            return 1
+        fi
     else
-        report_fail "$id"
-        return 1
+        if "$@" >/dev/null 2>&1; then
+            report_pass "$id"
+            return 0
+        else
+            report_fail "$id"
+            return 1
+        fi
     fi
 }
 

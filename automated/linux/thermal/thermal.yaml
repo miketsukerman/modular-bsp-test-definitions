@@ -21,6 +21,7 @@ params:
   TZ0_MIN: "10"                # Minimum expected temperature (°C)
   TZ0_MAX: "95"                # Maximum expected temperature (°C)
   # TZ1_DEV, TZ1_MIN, TZ1_MAX, … for additional zones
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

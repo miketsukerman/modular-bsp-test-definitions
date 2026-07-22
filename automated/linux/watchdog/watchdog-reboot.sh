@@ -28,6 +28,7 @@ if ! [ -e "${WATCHDOG_DEV}" ]; then
 fi
 
 info_msg "Opening ${WATCHDOG_DEV} – system will reboot in ${WATCHDOG_TIMEOUT_S}s"
+verbose_log "${req_id}" "Watchdog device: ${WATCHDOG_DEV} timeout: ${WATCHDOG_TIMEOUT_S}s"
 
 # Write result BEFORE triggering the reboot so that LAVA can pick it up after
 # the board comes back online (the result file must persist across the reboot,

@@ -132,6 +132,9 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
         continue
     fi
 
+    verbose_log "${req_dev}" "Checking block device ${dev}"
+    verbose_cmd "${req_dev}" fdisk -l "${dev}"
+
     if chk_rw_bdev "${dev}"; then
         report_pass "${req_dev}"
     else
@@ -144,6 +147,7 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
     if [ "${sectors}" -gt 0 ] 2>/dev/null; then
         rs=$(cat "/sys/block/${dn}/size" 2>/dev/null)
         rs=$((rs + 0))
+        verbose_log "L-DISK-SECTORS-disk${n}" "Sector count: found=${rs} expected=${sectors}"
         if [ "${rs}" -eq "${sectors}" ]; then
             report_pass "L-DISK-SECTORS-disk${n}"
         else
@@ -153,6 +157,7 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
 
     # Disk type
     tdt=$(disk_type "${dev}")
+    verbose_log "L-DISK-TYPE-disk${n}" "Disk type: found=${tdt} expected=${dtype}"
     if [ "${tdt}" = "${dtype}" ]; then
         report_pass "L-DISK-TYPE-disk${n}"
     else
@@ -162,6 +167,7 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
     # MMC extended CSD
     if [ "${dtype}" = "MMC" ]; then
         if chk_cmd mmc; then
+            verbose_log "L-DISK-EXTCSD-READABLE-disk${n}" "Reading eMMC extended CSD for ${dev}"
             if mmc extcsd read "${dev}" >/dev/null 2>&1; then
                 report_pass "L-DISK-EXTCSD-READABLE-disk${n}"
             else
@@ -174,12 +180,14 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
 
     # Read throughput (functional)
     if [ "${min_rs}" -gt 0 ] 2>/dev/null; then
+        verbose_log "L-DISK-READ-THROUGHPUT-F-disk${n}" "Starting read throughput test on ${dev} (min=${min_rs} MB/s)"
         file_read_test "${dev}" 100000 1000 "${min_rs}" \
             "L-DISK-READ-THROUGHPUT-F-disk${n}"
     fi
 
     # Write throughput (functional)
     if [ "${min_ws}" -gt 0 ] 2>/dev/null; then
+        verbose_log "L-DISK-WRITE-THROUGHPUT-F-disk${n}" "Starting write throughput test on ${dev} (min=${min_ws} MB/s)"
         fs_write_test "${dev}" 100000 1000 "${min_ws}" \
             "L-DISK-WRITE-THROUGHPUT-F-disk${n}"
     fi

@@ -28,6 +28,7 @@ while [ "${n}" -lt "${NPU_COUNT}" ]; do
     req_ctrl="L-NPU-CONTROLLER-npu${n}"
 
     if [ -n "${dev}" ]; then
+        verbose_log "${req_dev}" "Checking NPU device node ${dev}"
         if chk_rw_cdev "${dev}"; then
             report_pass "${req_dev}"
         else
@@ -36,6 +37,7 @@ while [ "${n}" -lt "${NPU_COUNT}" ]; do
     fi
 
     if [ -n "${bus}" ] && [ -n "${bus_id}" ]; then
+        verbose_log "${req_ctrl}" "Checking NPU bus controller ${bus}:${bus_id}"
         chk_bus "${bus}" "${bus_id}" "${bus_dt}" "${bus_nn}" "${dev}" "${req_ctrl}"
     fi
 

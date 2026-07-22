@@ -26,6 +26,7 @@ while [ "${n}" -lt "${I2C_COUNT}" ]; do
     req_ctrl="L-I2C-CONTROLLER-i2c${n}"
 
     # Device node check
+    verbose_log "${req_dev}" "Checking device node ${dev}"
     if chk_rw_cdev "${dev}"; then
         report_pass "${req_dev}"
     else
@@ -37,6 +38,8 @@ while [ "${n}" -lt "${I2C_COUNT}" ]; do
     # Controller name check (requires i2c-tools)
     if [ -n "${controller}" ]; then
         if chk_cmd i2cdetect; then
+            verbose_log "${req_ctrl}" "Running i2cdetect -l (looking for ${iface} / ${controller})"
+            verbose_cmd "${req_ctrl}" i2cdetect -l
             if i2cdetect -l 2>/dev/null | grep -w "^${iface}" | grep -q "${controller}"; then
                 report_pass "${req_ctrl}"
             else

@@ -26,6 +26,7 @@ params:
   DISK0_MIN_RS: "100"          # Minimum read speed MB/s (0 = skip)
   DISK0_MIN_WS: "40"           # Minimum write speed MB/s (0 = skip)
   # DISK1_DEV, DISK1_TYPE, … for additional disks
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

@@ -21,6 +21,7 @@ params:
   RTC_DEV: "/dev/rtc0"
   SLEEP_STATE: "mem"           # rtcwake -m argument: mem, freeze, standby, …
   WAKE_SLEEP_TIME_S: "5"       # How many seconds to sleep before waking
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

@@ -37,6 +37,7 @@ params:
   GPU_WAYLAND: ""              # Compositor: weston, mutter, or empty to skip
   GPU_VA_CODECS: ""            # Space-separated "codec:entry" pairs for vainfo
   SKIP_INSTALL: "false"
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

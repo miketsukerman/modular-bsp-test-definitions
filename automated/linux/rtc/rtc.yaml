@@ -22,6 +22,7 @@ params:
   RTC0_DEV: "/dev/rtc0"
   RTC0_WAKEUP: "enabled"       # Expected /sys/…/wakeup value (enabled/disabled)
   # RTC1_DEV, … for additional RTCs
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

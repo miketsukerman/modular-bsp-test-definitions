@@ -20,6 +20,7 @@ metadata:
 params:
   WATCHDOG_DEV: "/dev/watchdog0"
   WATCHDOG_TIMEOUT_S: "30"     # Seconds to wait for the reboot to complete
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

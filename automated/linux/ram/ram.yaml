@@ -24,6 +24,7 @@ params:
   RAM_STABILITY_MAX_MB: "256"  # Hard upper bound on memtest size (MiB)
   RAM_STABILITY_TIMEOUT: "300" # Max seconds for memtester before aborting
   # RAM_SLOT1_SIZE, RAM_SLOT1_SPEED, … for additional slots
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

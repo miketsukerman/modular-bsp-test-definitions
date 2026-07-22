@@ -46,6 +46,8 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
     req_rx="L-ETH-RX-THROUGHPUT-F-${label}"
 
     # Device existence
+    verbose_log "${req_dev}" "Checking interface ${iface}"
+    verbose_cmd "${req_dev}" ip addr show "${iface}"
     if ip addr show "${iface}" >/dev/null 2>&1; then
         report_pass "${req_dev}"
     else
@@ -61,7 +63,10 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
 
     # Link speed
     if [ -n "${link}" ] && chk_cmd ethtool; then
+        verbose_log "${req_link}" "Querying link speed for ${iface} (expected: ${link} Mbps)"
+        verbose_cmd "${req_link}" ethtool "${iface}"
         la=$(ethtool "${iface}" 2>/dev/null | grep Speed: | awk '{print $2}' | awk -F'M' '{print $1}')
+        verbose_log "${req_link}" "Detected link speed: ${la} Mbps"
         if [ "${la}" = "${link}" ]; then
             report_pass "${req_link}"
         else
@@ -71,6 +76,7 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
 
     # Interface UP
     flags=$(ip addr show "${iface}" 2>/dev/null | awk -F'<' '{print $2}' | awk -F'>' '{print $1}' | tr ',' ' ')
+    verbose_log "${req_cfg}" "Interface flags for ${iface}: ${flags}"
     if echo "${flags}" | grep -qw "UP"; then
         report_pass "${req_cfg}"
     else
@@ -82,6 +88,7 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
     # IPv4 address
     ip4=$(get_ip "${iface}" 4)
     ip4_plain=$(echo "${ip4}" | awk -F/ '{print $1}')
+    verbose_log "${req_ip4}" "IPv4 address for ${iface}: ${ip4:-<none>}"
     if [ -n "${ip4}" ]; then
         report_pass "${req_ip4}"
     else
@@ -90,6 +97,7 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
 
     # IPv6 address
     ip6=$(get_ip "${iface}" 6)
+    verbose_log "${req_ip6}" "IPv6 address for ${iface}: ${ip6:-<none>}"
     if [ -n "${ip6}" ]; then
         report_pass "${req_ip6}"
     else
@@ -99,6 +107,7 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
     # Wake-on-LAN
     if [ -n "${wol_feat}" ] && chk_cmd ethtool; then
         caps=$(ethtool "${iface}" 2>/dev/null | grep "Supports Wake-on:" | awk '{print $NF}')
+        verbose_log "${req_wol_feat}" "WoL capabilities for ${iface}: ${caps:-<none>} (expected: ${wol_feat})"
         if echo "${caps}" | grep -q "${wol_feat}"; then
             report_pass "${req_wol_feat}"
         else
@@ -107,6 +116,7 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
 
         if [ -n "${wol_wakeup}" ]; then
             we=$(cat "/sys/class/net/${iface}/device/power/wakeup" 2>/dev/null)
+            verbose_log "${req_wol_en}" "WoL wakeup for ${iface}: found='${we}' expected='${wol_wakeup}'"
             if [ "${we}" = "${wol_wakeup}" ]; then
                 report_pass "${req_wol_en}"
             else
@@ -116,6 +126,7 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
     fi
 
     # iperf3 throughput (functional – skip when no server IP)
+    # Verbose mode logs only the summary line to keep log sizes small.
     if [ -z "${IPERF3_SERVER_IP}" ] || [ -z "${ip4_plain}" ]; then
         report_skip "${req_tx}"
         report_skip "${req_rx}"
@@ -123,10 +134,12 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
         if chk_cmd iperf3; then
             # TX
             if [ "${min_tx}" -gt 0 ] 2>/dev/null; then
+                verbose_log "${req_tx}" "Running iperf3 TX test to ${IPERF3_SERVER_IP} for ${IPERF3_DURATION}s"
                 tx_raw=$(iperf3 -c "${IPERF3_SERVER_IP}" -B "${ip4_plain}" \
                          -t "${IPERF3_DURATION}" -4 2>/dev/null |
                          grep -i receiver | awk '{print $7}')
                 tx_mbps=$(echo "${tx_raw}" | awk '{printf "%d", $1}')
+                verbose_log "${req_tx}" "TX result: ${tx_mbps} Mbps (min: ${min_tx} Mbps)"
                 if [ "${tx_mbps}" -ge "${min_tx}" ] 2>/dev/null; then
                     report_metric "${req_tx}" "pass" "${tx_mbps}" "Mbps"
                 else
@@ -137,10 +150,12 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
             fi
             # RX
             if [ "${min_rx}" -gt 0 ] 2>/dev/null; then
+                verbose_log "${req_rx}" "Running iperf3 RX test to ${IPERF3_SERVER_IP} for ${IPERF3_DURATION}s"
                 rx_raw=$(iperf3 -c "${IPERF3_SERVER_IP}" -B "${ip4_plain}" \
                          -t "${IPERF3_DURATION}" -4 -R 2>/dev/null |
                          grep -i receiver | awk '{print $7}')
                 rx_mbps=$(echo "${rx_raw}" | awk '{printf "%d", $1}')
+                verbose_log "${req_rx}" "RX result: ${rx_mbps} Mbps (min: ${min_rx} Mbps)"
                 if [ "${rx_mbps}" -ge "${min_rx}" ] 2>/dev/null; then
                     report_metric "${req_rx}" "pass" "${rx_mbps}" "Mbps"
                 else
@@ -173,6 +188,7 @@ for host in ${DNS_CHECK_HOSTS}; do
             resolved=$(ping -c 1 "-${proto}" "${host}" 2>/dev/null | head -1 |
                        awk -F'(' '{print $2}' | awk -F')' '{print $1}')
         fi
+        verbose_log "L-DNS-IPV${proto}" "DNS lookup ${rec} ${host}: ${resolved:-<not resolved>}"
         if [ -n "${resolved}" ]; then
             report_pass "L-DNS-IPV${proto}"
         else
@@ -183,6 +199,7 @@ done
 
 for host in ${PING_CHECK_HOSTS}; do
     for proto in 4 6; do
+        verbose_log "L-ETH-IPV${proto}-PING" "Pinging ${host} over IPv${proto}"
         if ping "-${proto}" -c 1 "${host}" >/dev/null 2>&1; then
             report_pass "L-ETH-IPV${proto}-PING"
         else

@@ -33,6 +33,7 @@ params:
   AUDIO_CAP0_DEV_ID: ""
   AUDIO_CAP0_CODEC: ""
   # AUDIO_PB1_*, AUDIO_CAP1_*, … for additional devices
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

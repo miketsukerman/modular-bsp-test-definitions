@@ -21,7 +21,10 @@ create_out_dir
 # ─── USB host – any enumerated device ────────────────────────────────────────
 
 if chk_cmd lsusb; then
+    verbose_log "L-USB-HOST-DEV" "Enumerating USB devices with lsusb"
+    verbose_cmd "L-USB-HOST-DEV" lsusb
     dev_count=$(lsusb 2>/dev/null | wc -l)
+    verbose_log "L-USB-HOST-DEV" "Found ${dev_count} USB device(s)"
     if [ "${dev_count}" -gt 0 ]; then
         report_pass "L-USB-HOST-DEV"
     else
@@ -48,11 +51,14 @@ while [ "${n}" -lt "${USB_DEV_COUNT}" ]; do
     fi
 
     if chk_cmd lsusb; then
+        verbose_log "${req_id}" "Checking USB port ${port} driver=${driver} speed=${speed}"
+        verbose_cmd "${req_id}" lsusb -t
         tspeed=$(lsusb -t 2>/dev/null |
                  grep -E "Port ${port}:|Port 00${port}:" |
                  grep -v root_hub | grep -v "Driver=hub" |
                  grep "If 0" | grep "Driver=${driver}" |
                  grep "${speed}" | awk '{print $NF}')
+        verbose_log "${req_id}" "Found speed: '${tspeed}' (expected: '${speed}')"
         if [ "${tspeed}" = "${speed}" ]; then
             report_pass "${req_id}"
         else
@@ -72,6 +78,7 @@ if [ "${USB_OTG_ENABLED}" = "1" ] || [ "${USB_OTG_ENABLED}" = "y" ]; then
     for cfg_key in ${USB_OTG_CONF}; do
         req_id="L-USB-OTG-CONF-${cfg_key}"
         found=0
+        verbose_log "${req_id}" "Checking kernel config ${cfg_key}"
         if [ -e /proc/config.gz ]; then
             if zcat /proc/config.gz 2>/dev/null | grep -qi "^${cfg_key}=y\|^${cfg_key}=m"; then
                 found=1
@@ -81,6 +88,7 @@ if [ "${USB_OTG_ENABLED}" = "1" ] || [ "${USB_OTG_ENABLED}" = "y" ]; then
                 found=1
             fi
         fi
+        verbose_log "${req_id}" "Kernel config ${cfg_key}: found=${found}"
         if [ "${found}" -eq 1 ]; then
             report_pass "${req_id}"
         else

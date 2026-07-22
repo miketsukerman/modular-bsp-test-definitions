@@ -27,6 +27,7 @@ params:
   # direction: in | out    edge: rising | falling | both (optional, for IRQ pins)
   # Example: "GPIO0:5:in:SENSOR_IRQ GPIO0:6:out:LED_RED"
   GPIO_PINS: ""
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

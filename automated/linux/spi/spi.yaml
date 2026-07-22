@@ -21,6 +21,7 @@ params:
   SPI_COUNT: "1"               # Number of SPI devices to check
   SPI0_DEV: "/dev/spidev0.0"  # Device node
   # SPI1_DEV, … for additional devices
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

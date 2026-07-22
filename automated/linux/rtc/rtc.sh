@@ -19,6 +19,7 @@ create_out_dir
 : "${RTC_COUNT:=1}"
 
 # Default /dev/rtc symlink check
+verbose_log "L-RTC-DEFAULT" "Checking /dev/rtc default symlink"
 if chk_rw_cdev /dev/rtc; then
     report_pass "L-RTC-DEFAULT"
 else
@@ -36,6 +37,7 @@ while [ "${n}" -lt "${RTC_COUNT}" ]; do
     req_set="L-RTC-SET-F-rtc${n}"
     req_wakeup="L-RTC-WAKEUP-rtc${n}"
 
+    verbose_log "${req_dev}" "Checking RTC device node ${dev}"
     if chk_rw_cdev "${dev}"; then
         report_pass "${req_dev}"
     else
@@ -45,7 +47,9 @@ while [ "${n}" -lt "${RTC_COUNT}" ]; do
     fi
 
     # hwclock get
+    verbose_log "${req_get}" "Reading hardware clock from ${dev}"
     hwt=$(hwclock --rtc "${dev}" --get 2>/dev/null)
+    verbose_log "${req_get}" "Hardware clock time: ${hwt:-<not readable>}"
     if [ -n "${hwt}" ]; then
         report_pass "${req_get}"
     else
@@ -56,6 +60,7 @@ while [ "${n}" -lt "${RTC_COUNT}" ]; do
 
     # hwclock set (round-trip)
     s=$(date -d "${hwt}" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
+    verbose_log "${req_set}" "Setting hardware clock to '${s}'"
     if hwclock --rtc "${dev}" --set --date "${s}" >/dev/null 2>&1; then
         report_pass "${req_set}"
     else
@@ -66,6 +71,7 @@ while [ "${n}" -lt "${RTC_COUNT}" ]; do
     wu="/sys/class/rtc/${iface}/device/power/wakeup"
     we="disabled"
     [ ! -e "${wu}" ] || we=$(cat "${wu}")
+    verbose_log "${req_wakeup}" "RTC wakeup: found='${we}' expected='${wakeup_exp}'"
 
     if [ "${we}" = "${wakeup_exp}" ]; then
         report_pass "${req_wakeup}"

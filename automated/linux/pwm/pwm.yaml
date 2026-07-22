@@ -23,6 +23,7 @@ params:
   PWM0_REFERENCE: ""           # Human reference (informational only)
   PWM_BACKLIGHT_DEV: ""        # /sys/class/backlight/<dev> path (empty = skip)
   # PWM1_DEV, PWM1_BUS, PWM1_BUS_ID, … for additional chips
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

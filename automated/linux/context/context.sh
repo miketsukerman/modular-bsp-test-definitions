@@ -18,6 +18,7 @@ create_out_dir
 
 if [ -n "${DISTRO_ID}" ]; then
     dt=$(get_distro_id)
+    verbose_log "L-SW-DISTRO-ID" "Distro ID: found='${dt}' expected='${DISTRO_ID}'"
     if echo "${dt}" | grep -qi "${DISTRO_ID}"; then
         report_pass "L-SW-DISTRO-ID"
     else
@@ -29,6 +30,7 @@ fi
 
 if [ -n "${DISTRO_VER}" ]; then
     vt=$(get_distro_ver)
+    verbose_log "L-SW-DISTRO-VER" "Distro version: found='${vt}' expected='${DISTRO_VER}'"
     if echo "${vt}" | grep -qi "${DISTRO_VER}"; then
         report_pass "L-SW-DISTRO-VER"
     else
@@ -45,6 +47,8 @@ if [ -n "${KERNEL_MIN_VER}" ]; then
     cur_major=$(echo "${cur}" | awk -F. '{print $1+0}')
     cur_minor=$(echo "${cur}" | awk -F. '{print $2+0}')
 
+    verbose_log "L-SW-KERNEL-MIN-VER" "Kernel: running='${cur}' minimum='${KERNEL_MIN_VER}'"
+
     if [ "${cur_major}" -gt "${req_major}" ] || \
        { [ "${cur_major}" -eq "${req_major}" ] && [ "${cur_minor}" -ge "${req_minor}" ]; }; then
         report_pass "L-SW-KERNEL-MIN-VER"
@@ -58,6 +62,7 @@ fi
 if [ -n "${CPU_MODEL}" ]; then
     cpu_model=$(grep -m1 'Model name\|Hardware\|cpu model' /proc/cpuinfo 2>/dev/null |
                 awk -F: '{print $2}' | xargs)
+    verbose_log "L-CPU-MODEL" "CPU model: found='${cpu_model}' expected='${CPU_MODEL}'"
     if echo "${cpu_model}" | grep -qi "${CPU_MODEL}"; then
         report_pass "L-CPU-MODEL"
     else
@@ -72,6 +77,7 @@ if [ -n "${BIOS_DATE}" ]; then
     # Normalise MM/DD/YYYY → YYYYMMDD
     bios_norm=$(echo "${bios_raw}" |
                 awk -F/ 'NF==3{printf "%04d%02d%02d\n",$3,$1,$2} NF!=3{print $0}')
+    verbose_log "L-BIOS-DATE-MINIMUM" "BIOS date: found='${bios_norm}' expected='${BIOS_DATE}'"
     if [ "${bios_norm}" = "${BIOS_DATE}" ]; then
         report_pass "L-BIOS-DATE-MINIMUM"
     else

@@ -46,10 +46,15 @@ check_audio_device() {
         return
     fi
 
+    verbose_log "${req_base}" "Listing audio devices with ${cmd} -l"
+    verbose_cmd "${req_base}" "${cmd}" -l
+
     # Match card name and codec from aplay/arecord -l
     entry=$("${cmd}" -l 2>/dev/null | grep "${card}" | grep "${controller}:" | head -1)
     tcard=$(echo "${entry}" | awk -F'[' '{print $2}' | awk -F']' '{print $1}')
     tcodec=$(echo "${entry}" | awk -F'[' '{print $3}' | awk -F']' '{print $1}')
+
+    verbose_log "${req_base}" "Expected card='${card}' codec='${codec}'; found card='${tcard}' codec='${tcodec}'"
 
     if [ "${tcard}" = "${card}" ] && [ -n "${card}" ] && \
        [ "${tcodec}" = "${codec}" ]; then

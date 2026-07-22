@@ -18,6 +18,7 @@ create_out_dir
 : "${OPTEE_FULL_TEST:=0}"
 
 if [ -n "${OPTEE_DEV}" ]; then
+    verbose_log "L-OPTEE-DEV" "Checking OP-TEE device node ${OPTEE_DEV}"
     if chk_rw_cdev "${OPTEE_DEV}"; then
         report_pass "L-OPTEE-DEV"
     else
@@ -33,7 +34,20 @@ if chk_cmd xtest; then
         xt_args="1001"
     fi
 
-    if xtest ${xt_args} >/dev/null 2>&1; then
+    verbose_log "L-OPTEE-XTEST-F" "Running xtest ${xt_args} (limited output below)"
+    # xtest can produce large output; capture only the last 50 lines when verbose.
+    if [ "${VERBOSE}" = "1" ]; then
+        xtest_logf="${OUTPUT}/$(lava_id L-OPTEE-XTEST-F).log"
+        # shellcheck disable=SC2086
+        xtest ${xt_args} 2>&1 | tail -n 50 | tee -a "${xtest_logf}" >&2
+        xtest_rc=${PIPESTATUS[0]}
+    else
+        # shellcheck disable=SC2086
+        xtest ${xt_args} >/dev/null 2>&1
+        xtest_rc=$?
+    fi
+
+    if [ "${xtest_rc}" -eq 0 ]; then
         report_pass "L-OPTEE-XTEST-F"
     else
         report_fail "L-OPTEE-XTEST-F"

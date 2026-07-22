@@ -33,6 +33,7 @@ for j in ${CPU_NPROC}; do
 done
 
 if [ -n "${CPU_NPROC}" ]; then
+    verbose_log "L-CPU-NPROC" "CPU count: found=${np} expected=${CPU_NPROC}"
     if [ "${tnp}" -eq "${np}" ]; then
         report_pass "L-CPU-NPROC"
     else
@@ -62,6 +63,7 @@ while [ "${n}" -lt "${tnp_max}" ]; do
     for cs in ${CPU_CSTATES}; do
         cstate_files="${cn}/cpuidle/state*/name"
         # allow glob to expand; if none match grep does not find it
+        verbose_log "L-CPU-C-STATES-${k}" "Checking C-state '${cs}' for ${k}"
         if grep -q "${cs}" ${cstate_files} /dev/null 2>/dev/null; then
             report_pass "L-CPU-C-STATES-${k}"
         else
@@ -75,6 +77,7 @@ while [ "${n}" -lt "${tnp_max}" ]; do
     if [ "${CPU_SCALING_MIN}" -gt 0 ] 2>/dev/null; then
         ft=$(cat "${cpufreq}/scaling_min_freq" 2>/dev/null)
         ft=$((ft + 0))
+        verbose_log "L-CPU-FREQ-SCALING-MIN-${k}" "scaling_min_freq: found=${ft} expected=${CPU_SCALING_MIN}"
         if [ "${CPU_SCALING_MIN}" -eq "${ft}" ]; then
             report_pass "L-CPU-FREQ-SCALING-MIN-${k}"
         else
@@ -86,6 +89,7 @@ while [ "${n}" -lt "${tnp_max}" ]; do
     if [ "${CPU_SCALING_MAX}" -gt 0 ] 2>/dev/null; then
         ft=$(cat "${cpufreq}/scaling_max_freq" 2>/dev/null)
         ft=$((ft + 0))
+        verbose_log "L-CPU-FREQ-SCALING-MAX-${k}" "scaling_max_freq: found=${ft} expected=${CPU_SCALING_MAX}"
         if [ "${CPU_SCALING_MAX}" -eq "${ft}" ]; then
             report_pass "L-CPU-FREQ-SCALING-MAX-${k}"
         else
@@ -98,7 +102,9 @@ while [ "${n}" -lt "${tnp_max}" ]; do
     avail_gov="${cpufreq}/scaling_available_governors"
 
     for gov in ${CPU_SCALING_GOVERNORS}; do
-        found_gov=$(xargs -n1 < "${avail_gov}" 2>/dev/null | grep -w "${gov}" | head -1)
+        avail=$(cat "${avail_gov}" 2>/dev/null | xargs -n1)
+        verbose_log "L-CPU-SCALING-GOVERNOR-${k}" "Available governors: $(cat "${avail_gov}" 2>/dev/null); testing '${gov}'"
+        found_gov=$(echo "${avail}" | grep -w "${gov}" | head -1)
         if [ "${found_gov}" = "${gov}" ]; then
             report_pass "L-CPU-SCALING-GOVERNOR-${k}"
         else
@@ -109,6 +115,7 @@ while [ "${n}" -lt "${tnp_max}" ]; do
         # Functional: set governor (requires cpufreq-set)
         if chk_cmd cpufreq-set && \
            [ "${CPU_SCALING_MIN}" -gt 0 ] && [ "${CPU_SCALING_MAX}" -gt 0 ] 2>/dev/null; then
+            verbose_log "L-CPU-SCALING-GOVERNOR-SET-F-${k}" "Setting governor '${gov}' on ${k}"
             if cpufreq-set -c "${n}" -r -g "${gov}" \
                     --min "${CPU_SCALING_MIN}" \
                     --max "${CPU_SCALING_MAX}" 2>/dev/null; then
@@ -130,6 +137,7 @@ done
 
 # Power suspension states
 for ps in ${CPU_SUSPENSION_STATES}; do
+    verbose_log "L-CPU-POWER-STATE-SUSPENSION" "Checking suspension state '${ps}' in /sys/power/state"
     found=$(xargs -n1 < /sys/power/state 2>/dev/null | grep -w "${ps}" | head -1)
     if [ "${found}" = "${ps}" ]; then
         report_pass "L-CPU-POWER-STATE-SUSPENSION"

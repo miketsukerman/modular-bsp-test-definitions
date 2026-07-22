@@ -23,6 +23,7 @@ params:
   NPU0_BUS_DEVICE_TYPE: ""     # Bus device type for soc sysfs lookup
   NPU0_BUS_NODE_NAME: ""       # Node name for soc sysfs lookup
   # NPU1_DEV, … for additional devices
+  VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
   steps:

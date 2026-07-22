@@ -29,6 +29,7 @@ while [ "${n}" -lt "${RAM_SLOT_COUNT}" ]; do
     req_speed="L-RAM-SPEED-slot${n}"
 
     if [ "${expected_size}" -gt 0 ] 2>/dev/null; then
+        verbose_log "${req_size}" "RAM size slot${n}: found=${tsize} MiB expected=${expected_size} MiB"
         if [ "${tsize}" -eq "${expected_size}" ] 2>/dev/null; then
             report_pass "${req_size}"
         else
@@ -38,6 +39,7 @@ while [ "${n}" -lt "${RAM_SLOT_COUNT}" ]; do
 
     if [ -n "${expected_speed}" ]; then
         tspeed=$(physical_ram_MT)
+        verbose_log "${req_speed}" "RAM speed slot${n}: found=${tspeed} MT/s expected=${expected_speed} MT/s"
         if [ "${tspeed}" = "${expected_speed}" ]; then
             report_pass "${req_speed}"
         else
@@ -54,6 +56,7 @@ if [ "${RAM_MIN_AVAIL}" -gt 0 ] 2>/dev/null; then
     tm=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     # Convert kB → MiB (approximate)
     tm_mib=$(( (tm + 0) / 1024 ))
+    verbose_log "L-RAM-AVAILABLE-MIN" "Total RAM: ${tm_mib} MiB (minimum required: ${RAM_MIN_AVAIL} MiB)"
     if [ "${tm_mib}" -ge "${RAM_MIN_AVAIL}" ]; then
         report_pass "L-RAM-AVAILABLE-MIN"
     else
@@ -81,6 +84,9 @@ if [ "${mib}" -gt 0 ]; then
     if chk_cmd memtester; then
         # Bound the run with timeout and keep console output flowing so LAVA
         # sees progress and never appears to hang.
+        # memtester produces continuous output; always stream to console regardless
+        # of VERBOSE so LAVA does not time out on silence.
+        verbose_log "L-RAM-STABILITY-F" "Starting memtester ${mib}M (timeout ${RAM_STABILITY_TIMEOUT}s)"
         if chk_cmd timeout; then
             timeout "${RAM_STABILITY_TIMEOUT}" memtester "${mib}M" 1
             rc=$?

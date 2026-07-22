@@ -97,6 +97,7 @@ while [ "${n}" -lt "${CAN_COUNT}" ]; do
     req_ctrl="L-CAN-CONTROLLER-${label}"
     req_lb="L-CAN-LOOPBACK-F-${label}"
 
+    verbose_log "${req_dev}" "Checking CAN interface ${iface}"
     # Interface existence
     if ip addr show "${iface}" >/dev/null 2>&1; then
         report_pass "${req_dev}"
@@ -108,9 +109,12 @@ while [ "${n}" -lt "${CAN_COUNT}" ]; do
 
     # Clock frequency
     if [ -n "${clock}" ]; then
+        verbose_log "${req_clock}" "Querying clock for ${iface} (expected: ${clock})"
+        verbose_cmd "${req_clock}" ip -details -json link show "${iface}"
         cfound=$(ip -details -json link show "${iface}" 2>/dev/null |
                  grep '"clock":' | awk -F'"clock":' '{print $2}' | awk -F'}' '{print $1}' |
                  xargs)
+        verbose_log "${req_clock}" "Found clock=${cfound}"
         if [ "${cfound}" = "${clock}" ]; then
             report_pass "${req_clock}"
         else

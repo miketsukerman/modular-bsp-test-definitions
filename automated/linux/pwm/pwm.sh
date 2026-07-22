@@ -26,6 +26,7 @@ while [ "${n}" -lt "${PWM_COUNT}" ]; do
     req_dev="L-PWM-DEV-pwm${n}"
     req_ctrl="L-PWM-CONTROLLER-pwm${n}"
 
+    verbose_log "${req_dev}" "Checking PWM sysfs entry ${dpath}"
     if [ -e "${dpath}" ]; then
         report_pass "${req_dev}"
     else
@@ -33,6 +34,7 @@ while [ "${n}" -lt "${PWM_COUNT}" ]; do
     fi
 
     if [ -n "${bus}" ] && [ -n "${bus_id}" ]; then
+        verbose_log "${req_ctrl}" "Checking PWM bus controller ${bus}:${bus_id}"
         chk_bus "${bus}" "${bus_id}" pwm pwm "${dev}" "${req_ctrl}"
     fi
 
@@ -41,6 +43,7 @@ done
 
 # Backlight device check
 if [ -n "${PWM_BACKLIGHT_DEV}" ]; then
+    verbose_log "L-PWM-BACKLIGHT-BRIGHTNESS-DEV" "Checking backlight device ${PWM_BACKLIGHT_DEV}"
     if [ -e "${PWM_BACKLIGHT_DEV}" ]; then
         report_pass "L-PWM-BACKLIGHT-BRIGHTNESS-DEV"
     else

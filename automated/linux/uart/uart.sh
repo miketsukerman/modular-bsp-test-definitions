@@ -37,6 +37,7 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
     req_dbg="L-UART-DEBUG-CONSOLE-${label}"
 
     # Device node check
+    verbose_log "${req_dev}" "Checking UART device node ${dev}"
     if chk_rw_cdev "${dev}"; then
         report_pass "${req_dev}"
     else
@@ -47,10 +48,12 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
 
     # Bus controller
     if [ -n "${bus}" ] && [ -n "${bus_id}" ]; then
+        verbose_log "${req_ctrl}" "Checking UART bus controller ${bus}:${bus_id}"
         chk_bus "${bus}" "${bus_id}" serial tty "${dev}" "${req_ctrl}"
     fi
 
     # stty configure
+    verbose_log "${req_cfg}" "Testing stty configuration on ${dev}"
     if timeout "${UART_TEST_TIMEOUT_S}" stty -F "${dev}" >/dev/null 2>&1; then
         report_pass "${req_cfg}"
     else
@@ -59,9 +62,12 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
 
     # HWFC
     if [ "${hwfc}" = "1" ] || [ "${hwfc}" = "y" ]; then
+        verbose_log "${req_hwfc}" "Testing hardware flow control (crtscts) on ${dev}"
         if timeout "${UART_TEST_TIMEOUT_S}" stty -F "${dev}" crtscts >/dev/null 2>&1; then
             # Check that crtscts actually appeared in stty output
-            if stty -a -F "${dev}" 2>/dev/null | grep -qw "crtscts"; then
+            stty_out=$(stty -a -F "${dev}" 2>/dev/null)
+            verbose_log "${req_hwfc}" "stty -a output: ${stty_out}"
+            if echo "${stty_out}" | grep -qw "crtscts"; then
                 report_pass "${req_hwfc}"
             else
                 report_fail "${req_hwfc}"
@@ -78,6 +84,7 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
         dc=$(journalctl -b 2>/dev/null | grep command.line |
              grep console= | awk -F'console=' '{print $2}' | awk -F, '{print $1}')
         dt="/dev/${dc}"
+        verbose_log "${req_dbg}" "Debug console: kernel cmdline says '${dt}' expected '${dev}'"
         if [ "${dev}" = "${dt}" ]; then
             report_pass "${req_dbg}"
         else
@@ -107,6 +114,7 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
                 ;;
             esac
 
+            verbose_log "${req_lb}" "Loopback test on ${dev}: baud=${baud} wiring=${wiring} pattern='${t}'"
             if ! timeout "${UART_TEST_TIMEOUT_S}" \
                      stty -F "${dev}" "${baud}" ${sf} -cstopb -parenb >/dev/null 2>&1; then
                 report_fail "${req_cfg}"
@@ -124,6 +132,7 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
             t2=$(cat "${tmpf}")
             rm -f "${tmpf}"
 
+            verbose_log "${req_lb}" "Loopback result: sent='${t}' received='${t2}' rc=${ec}"
             if [ "${ec}" -eq 0 ] && [ "${t}" = "${t2}" ]; then
                 report_pass "${req_lb}"
             else
