@@ -2,8 +2,8 @@
 
 This guide explains how to add a **new test module** (or a new test case to an
 existing module) to the modular BSP test suite. It assumes you've read the
-[README](../README.md) for the overall layout and [`test-reference.md`](test-reference.md)
-for the parameter/test-case conventions.
+[README](../README.md) for the overall layout and the
+[test suite index](tests/README.md) for the parameter/test-case conventions.
 
 Every module is the same shape — a **YAML** test definition plus a **shell**
 script — so adding one is mostly a matter of following the existing pattern.
@@ -270,9 +270,14 @@ Keep the docs in sync so others can use your module:
 
 1. **`README.md`** – add a row to the *Test modules at a glance* table and, if it
    creates a new directory, the *Repository layout* tree.
-2. **`docs/test-reference.md`** – add a `## foo (adv-foo)` section listing every
-   `params` key (default + meaning) and every test-case ID the module emits.
-3. **`docs/lava-usage.md`** – optionally add a `test` definition entry to the job
+2. **`docs/tests/foo.md`** – add a suite document following the same template as
+   the existing ones (see [`docs/tests/gpio.md`](tests/gpio.md)): scope,
+   prerequisites, every `params` key (default + meaning), every test-case ID
+   with its pass/fail/skip criteria, a local run example, verbose-logging notes
+   and troubleshooting.
+3. **`docs/tests/README.md`** – add a row for the module to the suite table and
+   its test-case IDs to the ID index.
+4. **`docs/lava-usage.md`** – optionally add a `test` definition entry to the job
    example if the module is part of a standard run.
 
 ## Adding a test case to an existing module
@@ -282,8 +287,9 @@ To extend a module instead of creating one:
 1. Add any new `params` keys (with defaults) to the module's `*.yaml`.
 2. Emit the new check(s) from the module's `*.sh` using a fresh `L-…` ID and the
    `report_*` helpers.
-3. Update the module's section in [`test-reference.md`](test-reference.md) with
-   the new parameters and test-case IDs.
+3. Update the module's suite document under [`docs/tests/`](tests/README.md)
+   with the new parameters and test-case IDs, and add the IDs to the
+   [test-case ID index](tests/README.md#test-case-id-index).
 
 ## Disruptive tests get their own job
 
@@ -301,4 +307,4 @@ a job with other tests. Split it into its own module/job pair — see how
 - [ ] Functional (`:F`) checks degrade to `report_skip` when prerequisites are absent.
 - [ ] Runs locally and `output/result.txt` looks correct; `shellcheck` is clean.
 - [ ] (Optional) Registered in `tools/conf_to_yaml.py`.
-- [ ] README table, `test-reference.md` section, and (if relevant) `lava-usage.md` updated.
+- [ ] README table, `docs/tests/foo.md` suite document, `docs/tests/README.md` index rows, and (if relevant) `lava-usage.md` updated.

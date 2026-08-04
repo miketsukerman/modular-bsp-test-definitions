@@ -5,8 +5,8 @@ complete [LAVA](https://www.lavasoftware.org/) job. It assumes you already have
 a working LAVA instance with your board defined as a device-type and at least
 one device of that type online.
 
-For the per-module parameter reference see
-[`test-reference.md`](test-reference.md). For how an individual module executes
+For the per-module parameter reference see the
+[test suite index](tests/README.md), which links to one document per module. For how an individual module executes
 on the target see the [README](../README.md#how-a-module-runs).
 
 ## How the pieces fit together
@@ -209,14 +209,14 @@ actions:
    `feature/add-modular-bsp-tests`; use `main` or a tag for stable runs).
 4. Add or remove module entries under `definitions`, and fill in each module's
    `parameters` from your board's values — see
-   [`test-reference.md`](test-reference.md) for every key, or generate them
+   the module's [suite document](tests/README.md) for every key, or generate them
    automatically with
    [`tools/conf_to_yaml.py`](../README.md#generating-board-parameters-toolsconf_to_yamlpy).
 
 ## Reading the results
 
-Each module emits LAVA test cases named after the IDs in
-[`test-reference.md`](test-reference.md) (sanitised form, e.g.
+Each module emits LAVA test cases named after the IDs in the
+[test-case ID index](tests/README.md#test-case-id-index) (sanitised form, e.g.
 `L-CPU-NPROC`, `L-THERMAL-TEMP-tz0`). They appear under their definition `name`
 (`adv-thermal`, `adv-cpu`, …) in the LAVA job results. Functional (`:F`) cases
 report **skip** when their hardware prerequisites or parameters are absent, so a
