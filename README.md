@@ -52,29 +52,32 @@ automated/linux/
 
 | Module          | Definition file(s)                     | What it checks |
 |-----------------|----------------------------------------|----------------|
-| audio           | `audio.yaml`                           | Playback/capture device enumeration; functional loopback (skip stub) |
-| can             | `can.yaml`                             | CAN interface, controller, clock, SW loopback; external loopback (skip) |
-| context         | `context.yaml`                         | Distro ID/version, kernel min version, CPU model, BIOS date |
-| cpu             | `cpu.yaml`                             | CPU count, C-states, cpufreq min/max, governors, suspend states |
-| disk            | `disk.yaml`                            | rootfs mount/mode, block device type/sectors, eMMC CSD, dd throughput |
-| eth             | `eth.yaml`                             | Device, controller, link speed, IPv4/IPv6, WoL, DNS, ping, iperf3 |
-| gpio            | `gpio.yaml`                            | gpiochip node/label/line count, per-pin direction/read/set/IRQ |
-| gpu             | `gpu.yaml`                             | DRI/KMS nodes, GL/GLES, Wayland, Vulkan, VA-API, DRM/LVDS/backlight |
-| i2c             | `i2c.yaml`                             | I2C device nodes, R/W access, controller name |
-| npu             | `npu.yaml`                             | NPU device node R/W access, bus controller presence |
-| optee           | `optee.yaml`                           | OP-TEE device node, `xtest` regression (quick/full) |
-| pwm             | `pwm.yaml`                             | PWM chip presence, bus controller, backlight brightness |
-| ram             | `ram.yaml`                             | Per-slot size/speed (dmidecode), min memory, memtester stability |
-| rtc             | `rtc.yaml`, `rtc-suspend.yaml`         | RTC node, hwclock get/set, wakeup flag; suspend/resume (separate job) |
-| spi             | `spi.yaml`                             | spidev node R/W access, `spidev_test` loopback |
-| thermal         | `thermal.yaml`                         | thermal_zone presence and temperature within MIN/MAX bounds |
-| tpm             | `tpm.yaml`                             | TPM node, self-test, manufacturer, capabilities, PCR readability |
-| uart            | `uart.yaml`                            | UART node, controller, stty config, HWFC, debug console, loopback |
-| usb             | `usb.yaml`                             | USB host enumeration, plugged-device checks, OTG gadget config |
-| watchdog        | `watchdog.yaml`, `watchdog-reboot.yaml`| Watchdog node, daemon running; reboot test (separate job) |
+| [audio](docs/tests/audio.md)| `audio.yaml`                           | Playback/capture device enumeration; functional loopback (skip stub) |
+| [can](docs/tests/can.md)| `can.yaml`                             | CAN interface, controller, clock, SW loopback; external loopback (skip) |
+| [context](docs/tests/context.md)| `context.yaml`                         | Distro ID/version, kernel min version, CPU model, BIOS date |
+| [cpu](docs/tests/cpu.md)| `cpu.yaml`                             | CPU count, C-states, cpufreq min/max, governors, suspend states |
+| [disk](docs/tests/disk.md)| `disk.yaml`                            | rootfs mount/mode, block device type/sectors, eMMC CSD, dd throughput |
+| [eth](docs/tests/eth.md)| `eth.yaml`                             | Device, controller, link speed, IPv4/IPv6, WoL, DNS, ping, iperf3 |
+| [gpio](docs/tests/gpio.md)| `gpio.yaml`                            | gpiochip node/label/line count, per-pin direction/read/set/IRQ |
+| [gpu](docs/tests/gpu.md)| `gpu.yaml`                             | DRI/KMS nodes, GL/GLES, Wayland, Vulkan, VA-API, DRM/LVDS/backlight |
+| [i2c](docs/tests/i2c.md)| `i2c.yaml`                             | I2C device nodes, R/W access, controller name |
+| [npu](docs/tests/npu.md)| `npu.yaml`                             | NPU device node R/W access, bus controller presence |
+| [optee](docs/tests/optee.md)| `optee.yaml`                           | OP-TEE device node, `xtest` regression (quick/full) |
+| [pwm](docs/tests/pwm.md)| `pwm.yaml`                             | PWM chip presence, bus controller, backlight brightness |
+| [ram](docs/tests/ram.md)| `ram.yaml`                             | Per-slot size/speed (dmidecode), min memory, memtester stability |
+| [rtc](docs/tests/rtc.md)| `rtc.yaml`, `rtc-suspend.yaml`         | RTC node, hwclock get/set, wakeup flag; suspend/resume (separate job) |
+| [spi](docs/tests/spi.md)| `spi.yaml`                             | spidev node R/W access, `spidev_test` loopback |
+| [thermal](docs/tests/thermal.md)| `thermal.yaml`                         | thermal_zone presence and temperature within MIN/MAX bounds |
+| [tpm](docs/tests/tpm.md)| `tpm.yaml`                             | TPM node, self-test, manufacturer, capabilities, PCR readability |
+| [uart](docs/tests/uart.md)| `uart.yaml`                            | UART node, controller, stty config, HWFC, debug console, loopback |
+| [usb](docs/tests/usb.md)| `usb.yaml`                             | USB host enumeration, plugged-device checks, OTG gadget config |
+| [watchdog](docs/tests/watchdog.md)| `watchdog.yaml`, `watchdog-reboot.yaml`| Watchdog node, daemon running; reboot test (separate job) |
 
-See [`docs/test-reference.md`](docs/test-reference.md) for the full per-module
-parameter reference and the list of LAVA test-case IDs each module emits, and
+Each module name links to its own suite document under
+[`docs/tests/`](docs/tests/README.md), which covers scope, prerequisites, every
+parameter, every LAVA test-case ID with its pass/fail/skip criteria, a local
+run example and troubleshooting notes. The same index also carries a global
+test-case ID → suite lookup table. See
 [`docs/lava-usage.md`](docs/lava-usage.md) for how to assemble these modules
 into a complete LAVA job (with a full annotated job example). To add your own
 module or test case, see
@@ -146,8 +149,8 @@ lava-test-set stop
   dot), e.g. `L-ETH-LINK·eth0`.
 * `lava_id()` sanitises IDs for LAVA by replacing both `·` and `:` with `-`,
   so `L-ETH-TX-THROUGHPUT:F·eth0` is reported as
-  `L-ETH-TX-THROUGHPUT-F-eth0`. The IDs listed in `docs/test-reference.md` use
-  the sanitised form.
+  `L-ETH-TX-THROUGHPUT-F-eth0`. The IDs listed in the suite documents under
+  `docs/tests/` use the sanitised form.
 
 ## Shared helper library (`lib/adv-test-lib.sh`)
 
