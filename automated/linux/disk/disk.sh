@@ -50,19 +50,18 @@ fi
 
 file_read_test() {
     local dev="$1" bsz="$2" cnt="$3" minsp="$4" req_id="$5"
-    local tmpf
+    local tmpf out
     tmpf=$(mktemp /tmp/disk_read_test.XXXXXX)
     drop_caches
-    local out
+
     out=$(dd if="${dev}" of="${tmpf}" bs="${bsz}" count="${cnt}" \
              iflag=direct 2>&1 | tail -1)
+    rm -f "${tmpf}"    # Normalise to MB/s
+    local sp_mb
     local sp
     sp=$(echo "${out}" | awk '{print $(NF-1)}')
     local unit
     unit=$(echo "${out}" | awk '{print $NF}')
-    rm -f "${tmpf}"
-    # Normalise to MB/s
-    local sp_mb
     case "${unit}" in
     GB/s) sp_mb=$(awk "BEGIN{printf \"%d\", ${sp}*1024}") ;;
     MB/s) sp_mb=$(awk "BEGIN{printf \"%d\", ${sp}}") ;;
@@ -82,7 +81,7 @@ fs_write_test() {
     mnt=$(mktemp -d /tmp/disk_write_test.XXXXXX)
     # Find a writable partition on the device
     local part
-    part=$(lsblk -no NAME,TYPE "${dev}" 2>/dev/null | awk '/part/{print "/dev/"$1}' | head -1)
+    part=$(lsblk -nrpo NAME,TYPE "${dev}" 2>/dev/null | awk '$2=="part"{print $1; exit}')
     [ -n "${part}" ] || part="${dev}"
     if ! mount -o rw "${part}" "${mnt}" 2>/dev/null; then
         report_skip "${req_id}"
@@ -181,14 +180,14 @@ while [ "${n}" -lt "${DISK_COUNT}" ]; do
     # Read throughput (functional)
     if [ "${min_rs}" -gt 0 ] 2>/dev/null; then
         verbose_log "L-DISK-READ-THROUGHPUT-F-disk${n}" "Starting read throughput test on ${dev} (min=${min_rs} MB/s)"
-        file_read_test "${dev}" 100000 1000 "${min_rs}" \
+        file_read_test "${dev}" 1048576 100 "${min_rs}" \
             "L-DISK-READ-THROUGHPUT-F-disk${n}"
     fi
 
     # Write throughput (functional)
     if [ "${min_ws}" -gt 0 ] 2>/dev/null; then
         verbose_log "L-DISK-WRITE-THROUGHPUT-F-disk${n}" "Starting write throughput test on ${dev} (min=${min_ws} MB/s)"
-        fs_write_test "${dev}" 100000 1000 "${min_ws}" \
+        fs_write_test "${dev}" 1048576 100 "${min_ws}" \
             "L-DISK-WRITE-THROUGHPUT-F-disk${n}"
     fi
 

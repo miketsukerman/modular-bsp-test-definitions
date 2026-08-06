@@ -32,8 +32,8 @@ params:
   IPERF3_SERVER_IP: ""         # Host-side iperf3 server IP (empty = skip throughput tests)
   IPERF3_DURATION: "5"         # iperf3 test duration in seconds
 
-  DNS_CHECK_HOSTS: "advantech.com google.com"   # Space-separated hostnames
-  PING_CHECK_HOSTS: "advantech.com google.com"  # Space-separated hostnames
+  DNS_CHECK_HOSTS: "google.com"   # Space-separated hostnames
+  PING_CHECK_HOSTS: "google.com"  # Space-separated hostnames
   VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:
