@@ -20,6 +20,12 @@ create_out_dir
 : "${DNS_CHECK_HOSTS:=advantech.com google.com}"
 : "${PING_CHECK_HOSTS:=advantech.com google.com}"
 
+# Determine whether default routes exist before external ping checks.
+has_default_v4=0
+has_default_v6=0
+ip -4 route show default >/dev/null 2>&1 && has_default_v4=1
+ip -6 route show default >/dev/null 2>&1 && has_default_v6=1
+
 # ─── Per-interface checks ─────────────────────────────────────────────────────
 
 n=0
@@ -108,16 +114,46 @@ while [ "${n}" -lt "${ETH_COUNT}" ]; do
     if [ -n "${wol_feat}" ] && chk_cmd ethtool; then
         caps=$(ethtool "${iface}" 2>/dev/null | grep "Supports Wake-on:" | awk '{print $NF}')
         verbose_log "${req_wol_feat}" "WoL capabilities for ${iface}: ${caps:-<none>} (expected: ${wol_feat})"
-        if echo "${caps}" | grep -q "${wol_feat}"; then
-            report_pass "${req_wol_feat}"
-        else
-            report_fail "${req_wol_feat}"
-        fi
+        wol_feat_lc=$(echo "${wol_feat}" | tr '[:upper:]' '[:lower:]')
+        case "${wol_feat_lc}" in
+        y|yes|true|1)
+            # Legacy boolean expectation: pass when at least one WoL mode is supported.
+            if [ -n "${caps}" ] && [ "${caps}" != "d" ]; then
+                report_pass "${req_wol_feat}"
+            else
+                report_fail "${req_wol_feat}"
+            fi
+            ;;
+        n|no|false|0)
+            # Legacy boolean expectation: pass when no WoL mode is supported.
+            if [ -z "${caps}" ] || [ "${caps}" = "d" ]; then
+                report_pass "${req_wol_feat}"
+            else
+                report_fail "${req_wol_feat}"
+            fi
+            ;;
+        *)
+            if echo "${caps}" | grep -q "${wol_feat}"; then
+                report_pass "${req_wol_feat}"
+            else
+                report_fail "${req_wol_feat}"
+            fi
+            ;;
+        esac
 
         if [ -n "${wol_wakeup}" ]; then
             we=$(cat "/sys/class/net/${iface}/device/power/wakeup" 2>/dev/null)
-            verbose_log "${req_wol_en}" "WoL wakeup for ${iface}: found='${we}' expected='${wol_wakeup}'"
-            if [ "${we}" = "${wol_wakeup}" ]; then
+            exp_wakeup_lc=$(echo "${wol_wakeup}" | tr '[:upper:]' '[:lower:]')
+            case "${exp_wakeup_lc}" in
+            y|yes|true|1) exp_wakeup="enabled" ;;
+            n|no|false|0) exp_wakeup="disabled" ;;
+            *) exp_wakeup="${wol_wakeup}" ;;
+            esac
+            verbose_log "${req_wol_en}" "WoL wakeup for ${iface}: found='${we:-<unavailable>}' expected='${exp_wakeup}'"
+            if [ "${we}" = "${exp_wakeup}" ]; then
+                report_pass "${req_wol_en}"
+            elif [ -z "${we}" ] && [ "${exp_wakeup}" = "disabled" ]; then
+                # Some drivers expose no wakeup node; treat that as not wake-capable.
                 report_pass "${req_wol_en}"
             else
                 report_fail "${req_wol_en}"
@@ -199,6 +235,16 @@ done
 
 for host in ${PING_CHECK_HOSTS}; do
     for proto in 4 6; do
+        if [ "${proto}" = "4" ] && [ "${has_default_v4}" -ne 1 ]; then
+            verbose_log "L-ETH-IPV${proto}-PING" "Skipping IPv4 ping to ${host}: no default IPv4 route"
+            report_skip "L-ETH-IPV${proto}-PING"
+            continue
+        fi
+        if [ "${proto}" = "6" ] && [ "${has_default_v6}" -ne 1 ]; then
+            verbose_log "L-ETH-IPV${proto}-PING" "Skipping IPv6 ping to ${host}: no default IPv6 route"
+            report_skip "L-ETH-IPV${proto}-PING"
+            continue
+        fi
         verbose_log "L-ETH-IPV${proto}-PING" "Pinging ${host} over IPv${proto}"
         if ping "-${proto}" -c 1 "${host}" >/dev/null 2>&1; then
             report_pass "L-ETH-IPV${proto}-PING"

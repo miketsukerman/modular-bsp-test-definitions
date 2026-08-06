@@ -43,8 +43,8 @@ DNS resolution, and ping connectivity.
 | `ETH{N}_BUS` | `"soc"` | Controller bus type (`soc` or `pci`); empty = controller check not emitted |
 | `ETH{N}_BUS_ID` | `"29950000"` | Bus identifier used by the controller check; empty = controller check not emitted |
 | `ETH{N}_LINK` | `"100"` | Expected link speed in `Mbps`; empty or missing `ethtool` = check not emitted |
-| `ETH{N}_WOL_FEATURED` | `""` | Required Wake-on-LAN capability character, such as `g`; empty = WoL checks not emitted |
-| `ETH{N}_WOL_WAKEUP` | `""` | Expected `/sys/class/net/<iface>/device/power/wakeup` value; empty = wakeup-state check not emitted |
+| `ETH{N}_WOL_FEATURED` | `""` | Required Wake-on-LAN capability character, such as `g`; boolean aliases `y`/`yes` and `n`/`no` are also accepted |
+| `ETH{N}_WOL_WAKEUP` | `""` | Expected `/sys/class/net/<iface>/device/power/wakeup` value; aliases `y`/`yes` => `enabled`, `n`/`no` => `disabled`; empty = wakeup-state check not emitted |
 | `ETH{N}_MIN_TX_SPEED` | `"90"` | Minimum TX throughput in `Mbps`; `0` = TX result is skipped |
 | `ETH{N}_MIN_RX_SPEED` | `"90"` | Minimum RX throughput in `Mbps`; `0` = RX result is skipped |
 | `IPERF3_SERVER_IP` | `""` | Host-side `iperf3` server IP; empty = throughput results are skipped |
@@ -76,7 +76,7 @@ IDs are shown in sanitised (LAVA) form. `${label}` is `eth<N>` for interface
 | `L-DNS-IPV4` | | A record lookup returns a value (emitted once per `DNS_CHECK_HOSTS` entry) | Lookup returns no value | Not emitted when `DNS_CHECK_HOSTS` is empty |
 | `L-DNS-IPV6` | | AAAA record lookup returns a value (emitted once per `DNS_CHECK_HOSTS` entry) | Lookup returns no value | Not emitted when `DNS_CHECK_HOSTS` is empty |
 | `L-ETH-IPV4-PING` | | `ping -4 -c 1` succeeds (emitted once per `PING_CHECK_HOSTS` entry) | Ping fails | Not emitted when `PING_CHECK_HOSTS` is empty |
-| `L-ETH-IPV6-PING` | | `ping -6 -c 1` succeeds (emitted once per `PING_CHECK_HOSTS` entry) | Ping fails | Not emitted when `PING_CHECK_HOSTS` is empty |
+| `L-ETH-IPV6-PING` | | `ping -6 -c 1` succeeds (emitted once per `PING_CHECK_HOSTS` entry) | Ping fails | Skip when no default IPv6 route exists, or not emitted when `PING_CHECK_HOSTS` is empty |
 
 The throughput checks use `report_metric`, so LAVA receives the integer
 measurement and `Mbps` units alongside the pass/fail result.
