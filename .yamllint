@@ -1,0 +1,17 @@
+# yamllint configuration for the module test definitions and requirements.yaml
+#
+# The catalogue keeps one-sentence descriptions on a single line and the module
+# definitions carry trailing parameter comments, so line length is not capped.
+#
+# Copyright (c) 2024 Advantech Co., Ltd. All rights reserved
+
+extends: default
+
+rules:
+  line-length: disable
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  document-start: disable
+  truthy:
+    check-keys: false

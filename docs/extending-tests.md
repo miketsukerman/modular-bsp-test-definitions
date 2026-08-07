@@ -267,8 +267,11 @@ bash ../utils/send-to-lava.sh ./output/result.txt
 Lint the script before committing (the suite is shellcheck-clean):
 
 ```sh
-shellcheck automated/linux/foo/foo.sh
+shellcheck --severity=warning automated/linux/foo/foo.sh
 ```
+
+The repository [`.shellcheckrc`](../.shellcheckrc) makes shellcheck follow the
+`../lib/adv-test-lib.sh` source, so run it from the repository root.
 
 ## Step 5 — Wire the module into the board-parameter generator (optional)
 
@@ -303,6 +306,19 @@ Keep the docs in sync so others can use your module:
 4. **`docs/lava-usage.md`** – optionally add a `test` definition entry to the job
    example if the module is part of a standard run.
 
+Then verify that the documentation matches the repository:
+
+```sh
+python3 automated/linux/tools/check_docs.py
+```
+
+It fails when a module has no suite document, when the module tables or the
+[test-case ID index](tests/README.md#test-case-id-index) are missing an entry
+(or carry a stale one), when a suite document's *Test cases* table disagrees
+with the IDs the module's scripts emit, or when a relative Markdown link is
+broken. The same checks run in CI — see the
+[continuous integration section](../README.md#continuous-integration).
+
 ## Adding a test case to an existing module
 
 To extend a module instead of creating one:
@@ -314,8 +330,9 @@ To extend a module instead of creating one:
    test-case ID (keyed by the base ID, without the instance suffix) and run
    `python3 automated/linux/tools/check_requirements.py`.
 4. Update the module's suite document under [`docs/tests/`](tests/README.md)
-   with the new parameters and test-case IDs, and add the IDs to the
-   [test-case ID index](tests/README.md#test-case-id-index).
+   with the new parameters and test-case IDs, add the IDs to the
+   [test-case ID index](tests/README.md#test-case-id-index), and run
+   `python3 automated/linux/tools/check_docs.py`.
 
 ## Disruptive tests get their own job
 
@@ -332,6 +349,6 @@ a job with other tests. Split it into its own module/job pair — see how
 - [ ] Verbose-logging added: `verbose_log` before each check; `verbose_cmd` for external tools.
 - [ ] Functional (`:F`) checks degrade to `report_skip` when prerequisites are absent.
 - [ ] `requirements.yaml` entry added for every new test-case ID; `python3 automated/linux/tools/check_requirements.py` passes.
-- [ ] Runs locally and `output/result.txt` looks correct; `shellcheck` is clean.
+- [ ] Runs locally and `output/result.txt` looks correct; `shellcheck` and `yamllint` are clean.
 - [ ] (Optional) Registered in `tools/conf_to_yaml.py`.
-- [ ] README table, `docs/tests/foo.md` suite document, `docs/tests/README.md` index rows, and (if relevant) `lava-usage.md` updated.
+- [ ] README table, `docs/tests/foo.md` suite document, `docs/tests/README.md` index rows, and (if relevant) `lava-usage.md` updated; `python3 automated/linux/tools/check_docs.py` passes.

@@ -1,0 +1,58 @@
+# Repository and documentation consistency checks.
+#
+# Copyright (c) 2024 Advantech Co., Ltd. All rights reserved
+---
+name: checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y shellcheck
+      - name: Lint the module scripts
+        run: shellcheck --severity=warning automated/linux/*/*.sh
+
+  yamllint:
+    name: yamllint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint the test definitions and the requirements catalogue
+        run: yamllint --strict requirements.yaml automated/linux/*/*.yaml
+
+  consistency:
+    name: consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Byte-compile the repository tools
+        run: python -m compileall -q automated/linux/tools
+      - name: Check requirements.yaml against the emitted test-case IDs
+        run: python automated/linux/tools/check_requirements.py
+      - name: Check the documentation against the repository contents
+        run: python automated/linux/tools/check_docs.py

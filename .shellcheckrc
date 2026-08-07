@@ -1,0 +1,9 @@
+# shellcheck configuration
+#
+# Module scripts source ../lib/adv-test-lib.sh relative to their own directory,
+# so tell shellcheck where to find it instead of reporting SC1091.
+#
+# Copyright (c) 2024 Advantech Co., Ltd. All rights reserved
+
+external-sources=true
+source-path=SCRIPTDIR/../lib
