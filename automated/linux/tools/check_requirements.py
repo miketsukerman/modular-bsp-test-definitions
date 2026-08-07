@@ -216,7 +216,8 @@ def _load_catalog_keys_fallback(path: str) -> Tuple[List[str], List[str]]:
             if wrapper_indent is None:
                 if indent == 0 and key in ("requirements", "test_cases",
                                            "testcases") and not rest:
-                    wrapper_indent = None
+                    # The wrapper's own indentation is 0; the requirement keys
+                    # below it set wrapper_indent on the next iteration.
                     continue
                 if indent == 0 and not key.startswith("L-"):
                     continue
@@ -247,7 +248,7 @@ def prefix_hazards(keys: List[str]) -> List[Tuple[str, str]]:
     hazards = []
     for short in keys:
         for long in keys:
-            if short is long or not long.startswith(short):
+            if short == long or not long.startswith(short):
                 continue
             if long[len(short)] in SEPARATORS:
                 hazards.append((short, long))
