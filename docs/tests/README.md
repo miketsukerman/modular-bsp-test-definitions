@@ -43,6 +43,13 @@ Every LAVA test-case ID the suite can emit, in sanitised form (see the
 [ID conventions](../../README.md#test-case-id-conventions)). `${n}` and `${k}`
 stand for the zero-based instance suffix the script appends.
 
+Each ID is described in the root
+[`requirements.yaml`](../../requirements.yaml) catalogue, keyed by the ID with
+the instance suffix removed — `L-I2C-DEV-i2c${n}` is described by the
+`L-I2C-DEV` entry. See the
+[test case description metadata](../../README.md#test-case-description-metadata-requirementsyaml)
+section for the schema and the sync checker.
+
 | Test case ID | Suite |
 |--------------|-------|
 | `L-AUDIO-PLAYBACK-DEV-pb${n}` | [audio](audio.md) |
@@ -167,3 +174,5 @@ These are not test suites, but every suite depends on them:
 | [`lib/adv-test-lib.sh`](../../automated/linux/lib/adv-test-lib.sh) | Helper library sourced by every module script: result reporters, device/bus checks, verbose logging | [README – shared helper library](../../README.md#shared-helper-library-libadv-test-libsh) |
 | [`utils/send-to-lava.sh`](../../automated/linux/utils/send-to-lava.sh) | Translates `output/result.txt` into LAVA test-case signals and attaches verbose logs | [README – how a module runs](../../README.md#how-a-module-runs) |
 | [`tools/conf_to_yaml.py`](../../automated/linux/tools/conf_to_yaml.py) | Generates per-module `params.yaml` from a board `.conf` file | [README – generating board parameters](../../README.md#generating-board-parameters-toolsconf_to_yamlpy) |
+| [`requirements.yaml`](../../requirements.yaml) | Describes every requirement ID for report consumers | [README – test case description metadata](../../README.md#test-case-description-metadata-requirementsyaml) |
+| [`tools/check_requirements.py`](../../automated/linux/tools/check_requirements.py) | Checks `requirements.yaml` against the IDs the scripts can emit | [README – keeping the catalogue in sync](../../README.md#keeping-the-catalogue-in-sync) |

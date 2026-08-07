@@ -19,13 +19,15 @@ that are captured and surfaced by LAVA.
 ## Repository layout
 
 ```
+requirements.yaml              # Test-case description metadata (see below)
 automated/linux/
 ├── lib/
 │   └── adv-test-lib.sh        # Shared helper library, sourced by every module
 ├── utils/
 │   └── send-to-lava.sh        # Translates result.txt into LAVA signals
 ├── tools/
-│   └── conf_to_yaml.py        # Generates per-module params YAML from a board .conf
+│   ├── conf_to_yaml.py        # Generates per-module params YAML from a board .conf
+│   └── check_requirements.py  # Checks requirements.yaml against the emitted IDs
 ├── audio/   (audio.sh   + audio.yaml)
 ├── can/     (can.sh     + can.yaml)
 ├── context/ (context.sh + context.yaml)
@@ -186,6 +188,79 @@ python3 automated/linux/tools/conf_to_yaml.py path/to/board.conf --out-dir /tmp/
 This writes `<out-dir>/<module>/params.yaml` for every supported module, so a
 new board only needs its `.conf` authored once rather than each module YAML
 edited by hand.
+
+## Test case description metadata (`requirements.yaml`)
+
+Result lines only carry a test-case ID and a result. To let report consumers
+show *what a test case means* instead of a derived id string, every requirement
+is described once in the machine-readable catalogue
+[`requirements.yaml`](requirements.yaml) at the repository root.
+
+[bsp-registry-tools](https://github.com/miketsukerman/bsp-registry-tools)
+discovers the file automatically at the root of the cloned test-definitions
+repository — no registry-side configuration is required.
+
+### Entry schema
+
+```yaml
+requirements:
+  L-I2C-DEV:
+    description: The configured I2C bus device node exists and is usable.
+    verifies: Checks that the configured `/dev/i2c-N` node is a readable/writable character device.
+    category: I2C
+    remarks: When this fails the remaining checks for the bus are abandoned.
+    version: 1
+```
+
+| Field | Meaning |
+|-------|---------|
+| `description` | What the requirement means (its purpose), one board-agnostic sentence. |
+| `verifies` | How it is asserted — the mechanism used by the script. |
+| `category` | Subsystem grouping used by the report's category table (one of the 20 module subsystems: Audio, CAN, Context, CPU, Disk, Ethernet, GPIO, GPU, I2C, NPU, OP-TEE, PWM, RAM, RTC, SPI, Thermal, TPM, UART, USB, Watchdog). |
+| `remarks` | Prerequisites and skip conditions, including the extra hardware that functional (`:F`) cases need. |
+| `version` | Requirement version, starting at `1`; bump it when the *meaning* changes, not when the wording is polished. |
+| `specification` | Expected value. Left empty here: expectations are board-specific and live in the board `.conf` → `params.yaml`. A board overlay catalogue may supply them, either as a scalar or as an instance → value mapping. |
+| `manual` | `true` for requirements verified by manual inspection. Nothing in this repository emits manual results today. |
+
+A consumer applies per-field precedence *signal attribute > catalogue entry >
+derived*, so anything omitted here simply falls back to the humanised ID.
+
+### Keying rule and instance resolution
+
+Catalogue keys are the **base requirement ID in sanitised form, without the
+instance suffix**:
+
+* `L-I2C-DEV` covers `L-I2C-DEV-i2c0`, `L-I2C-DEV-i2c1`, …
+* `L-CAN-LOOPBACK-F` (note `:F` → `-F`) covers `L-CAN-LOOPBACK-F-can0`, …
+* IDs that are already instance-free — `L-OPTEE-DEV`, `L-DISK-ROOTFS-FOUND`,
+  `L-GPIO-INPUT` — are keyed as-is.
+
+An emitted ID is resolved by exact match first, then by longest-prefix match
+where the character after the prefix is one of `- _ . : /`; the remainder is the
+*instance key* used to look up a per-instance `specification`. Because the
+instance suffix must be separated that way, `L-DNS-IPV4`/`L-DNS-IPV6` and
+`L-ETH-IPV4-PING`/`L-ETH-IPV6-PING` are keyed in full.
+
+### Keeping the catalogue in sync
+
+`tools/check_requirements.py` statically extracts every requirement ID the
+module scripts can emit, reduces it to its base form and compares it with the
+catalogue:
+
+```sh
+python3 automated/linux/tools/check_requirements.py
+```
+
+It exits non-zero when an emitted ID has no catalogue entry, when a catalogue
+entry matches no emitted ID, or when catalogue keys are duplicated. It also
+lists prefix-shadowing keys (e.g. `L-SPI-DEV` ⊂ `L-SPI-DEV-TEST-F`), which
+resolve correctly by longest match but are worth knowing about when adding new
+IDs.
+
+An alternative to the shared catalogue is a `metadata.test_cases:` block inside
+a single module YAML, which overrides the catalogue for that suite only. It is
+deliberately unused here: it adds a non-standard key to a *Lava-Test Test
+Definition 1.0* document and scatters the metadata across the module files.
 
 ## Supported OS / scope
 
