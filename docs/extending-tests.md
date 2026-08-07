@@ -227,7 +227,30 @@ Follow the same rules the rest of the suite uses (see the
   over fail for "not applicable on this board".
 * **unknown** – the check ran but the result is indeterminate.
 
-## Step 3 — Make the script executable and verify locally
+## Step 3 — Describe the new requirements in `requirements.yaml`
+
+Every test-case ID the module can emit needs an entry in the root
+[`requirements.yaml`](../requirements.yaml) catalogue, otherwise report
+consumers fall back to a greyed-out string derived from the ID.
+
+Key the entry by the **base** requirement ID — the sanitised ID without the
+instance suffix (`L-FOO-DEV` covers `L-FOO-DEV-foo0`, `L-FOO-DEV-foo1`, …) — and
+author `description`, `verifies`, `category`, `remarks` and `version: 1`. Leave
+`specification` out: expected values are board-specific and come from the board
+`.conf`. The schema is documented in the
+[README](../README.md#test-case-description-metadata-requirementsyaml).
+
+The `description`/`verifies` prose and the pass/fail/skip criteria in
+`docs/tests/<module>.md` must agree — the catalogue is the machine-readable
+form of the same statements.
+
+Then verify that nothing drifted:
+
+```sh
+python3 automated/linux/tools/check_requirements.py
+```
+
+## Step 4 — Make the script executable and verify locally
 
 `send-to-lava.sh` degrades gracefully when the `lava-test-case` binary is absent
 (it prints `LAVA_SIGNAL_*` lines instead), so you can run a module outside LAVA:
@@ -247,7 +270,7 @@ Lint the script before committing (the suite is shellcheck-clean):
 shellcheck automated/linux/foo/foo.sh
 ```
 
-## Step 4 — Wire the module into the board-parameter generator (optional)
+## Step 5 — Wire the module into the board-parameter generator (optional)
 
 If the new module's parameters should be auto-generated from a board `.conf`
 file, register it in
@@ -264,7 +287,7 @@ Then `python3 tools/conf_to_yaml.py board.conf --out-dir /tmp/yaml` will emit
 `/tmp/yaml/foo/params.yaml`. Modules that aren't board-parameterised (or that
 you fill in by hand) can skip this step.
 
-## Step 5 — Document the module
+## Step 6 — Document the module
 
 Keep the docs in sync so others can use your module:
 
@@ -287,7 +310,10 @@ To extend a module instead of creating one:
 1. Add any new `params` keys (with defaults) to the module's `*.yaml`.
 2. Emit the new check(s) from the module's `*.sh` using a fresh `L-…` ID and the
    `report_*` helpers.
-3. Update the module's suite document under [`docs/tests/`](tests/README.md)
+3. Add a [`requirements.yaml`](../requirements.yaml) entry for every new
+   test-case ID (keyed by the base ID, without the instance suffix) and run
+   `python3 automated/linux/tools/check_requirements.py`.
+4. Update the module's suite document under [`docs/tests/`](tests/README.md)
    with the new parameters and test-case IDs, and add the IDs to the
    [test-case ID index](tests/README.md#test-case-id-index).
 
@@ -305,6 +331,7 @@ a job with other tests. Split it into its own module/job pair — see how
 - [ ] `automated/linux/foo/foo.sh` sourcing `adv-test-lib.sh`, using `report_*` helpers and `L-` IDs.
 - [ ] Verbose-logging added: `verbose_log` before each check; `verbose_cmd` for external tools.
 - [ ] Functional (`:F`) checks degrade to `report_skip` when prerequisites are absent.
+- [ ] `requirements.yaml` entry added for every new test-case ID; `python3 automated/linux/tools/check_requirements.py` passes.
 - [ ] Runs locally and `output/result.txt` looks correct; `shellcheck` is clean.
 - [ ] (Optional) Registered in `tools/conf_to_yaml.py`.
 - [ ] README table, `docs/tests/foo.md` suite document, `docs/tests/README.md` index rows, and (if relevant) `lava-usage.md` updated.

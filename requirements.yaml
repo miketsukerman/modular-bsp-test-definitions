@@ -1,0 +1,755 @@
+# requirements.yaml
+#
+# Advantech BSP QA – test-case description catalogue
+#
+# Machine-readable metadata for every requirement the modules under
+# automated/linux/ can report. Consumers (bsp-registry-tools) discover this
+# file automatically at the repository root and use it to enrich LAVA results
+# with a human-readable description instead of a derived id string.
+#
+# Keys are the *base* requirement ID in sanitised (LAVA) form, i.e. the emitted
+# test-case ID with its instance suffix removed: `L-I2C-DEV` covers
+# `L-I2C-DEV-i2c0`, `L-I2C-DEV-i2c1`, … The consumer resolves an emitted ID by
+# exact match first, then by longest prefix match where the character following
+# the prefix is one of `- _ . : /`.
+#
+# Entry schema (all fields optional except `description`):
+#   description   what the requirement means, board-agnostic, one sentence
+#   verifies      how it is asserted – the mechanism used by the script
+#   category      subsystem grouping used by the report's category table
+#   remarks       prerequisites and skip conditions
+#   version       requirement version, bumped when the meaning changes
+#   specification board-specific expected value; normally supplied by a board
+#                 overlay catalogue, not by this file
+#   manual        true for requirements verified by manual inspection
+#
+# Keep this file in sync with the scripts and with docs/tests/*.md:
+#   python3 automated/linux/tools/check_requirements.py
+#
+# Copyright (c) 2024 Advantech Co., Ltd. All rights reserved
+
+requirements:
+
+  # ─── Audio ────────────────────────────────────────────────────────────────
+  L-AUDIO-PLAYBACK-DEV:
+    description: The configured audio playback device is enumerated by ALSA with the expected card and codec.
+    verifies: Matches the card, codec and controller fields of the configured playback device against `aplay -l` output.
+    category: Audio
+    remarks: Skipped when `aplay` is unavailable; not emitted when no playback devices are configured.
+    version: 1
+  L-AUDIO-PLAYBACK-F:
+    description: Audio can be played back through the enumerated playback device.
+    verifies: Placeholder for a functional playback run; currently always reported as skip.
+    category: Audio
+    remarks: Functional test requiring an audio sink or loopback fixture; reported as skip until such a fixture exists.
+    version: 1
+  L-AUDIO-RECORDING-DEV:
+    description: The configured audio capture device is enumerated by ALSA with the expected card and codec.
+    verifies: Matches the card, codec and controller fields of the configured capture device against `arecord -l` output.
+    category: Audio
+    remarks: Skipped when `arecord` is unavailable; not emitted when no capture devices are configured.
+    version: 1
+  L-AUDIO-RECORDING-F:
+    description: Audio can be captured through the enumerated capture device.
+    verifies: Placeholder for a functional capture run; currently always reported as skip.
+    category: Audio
+    remarks: Functional test requiring an audio source or loopback fixture; reported as skip until such a fixture exists.
+    version: 1
+
+  # ─── CAN ──────────────────────────────────────────────────────────────────
+  L-CAN-DEV:
+    description: The configured CAN network interface exists on the target.
+    verifies: Runs `ip addr show <iface>` and requires it to succeed.
+    category: CAN
+    remarks: When this fails the remaining checks for the interface are abandoned.
+    version: 1
+  L-CAN-CLOCK:
+    description: The CAN controller runs at the expected base clock frequency.
+    verifies: Compares the `clock` value reported by `ip -details link show` with the configured frequency.
+    category: CAN
+    remarks: Not emitted when no clock is configured for the interface.
+    version: 1
+  L-CAN-CONTROLLER:
+    description: The CAN interface is provided by the expected PCI or SoC controller.
+    verifies: Uses the shared bus helper to locate the configured controller on the PCI or platform bus.
+    category: CAN
+    remarks: Not emitted when the bus type or bus id is not configured.
+    version: 1
+  L-CAN-LOOPBACK-F:
+    description: The CAN controller can send and receive a frame in internal loopback mode at each configured bitrate.
+    verifies: Brings the interface up in loopback mode, sends a frame with `cansend` and compares the frame received by `candump`.
+    category: CAN
+    remarks: Functional test; emitted once per configured bitrate and not emitted when no bitrates are configured.
+    version: 1
+  L-CAN-EXT-LOOP-F:
+    description: A CAN frame sent on one interface is received by the wired peer interface.
+    verifies: Configures both interfaces, sends a frame with `cansend` and compares the frame received by `candump` on the peer.
+    category: CAN
+    remarks: Functional test requiring external CAN wiring between two interfaces; reported as skip when no external loopback is configured.
+    version: 1
+
+  # ─── Context ──────────────────────────────────────────────────────────────
+  L-SW-DISTRO-ID:
+    description: The running image is built from the expected distribution.
+    verifies: Compares the distro id derived from `/etc/os-release` (normalised to `yocto` for OpenEmbedded images) against the expected substring.
+    category: Context
+    remarks: Not emitted when no expected distro id is configured.
+    version: 1
+  L-SW-DISTRO-VER:
+    description: The running image reports the expected distribution version.
+    verifies: Compares `VERSION_ID` from `/etc/os-release` against the expected substring.
+    category: Context
+    remarks: Not emitted when no expected distro version is configured.
+    version: 1
+  L-SW-KERNEL-MIN-VER:
+    description: The running kernel is at least the minimum supported version.
+    verifies: Compares the major and minor version of `uname -r` against the configured minimum.
+    category: Context
+    remarks: Not emitted when no minimum kernel version is configured.
+    version: 1
+  L-CPU-MODEL:
+    description: The board is populated with the expected CPU model.
+    verifies: Compares the detected CPU model string against the expected substring, case-insensitively.
+    category: Context
+    remarks: Not emitted when no expected CPU model is configured.
+    version: 1
+  L-BIOS-DATE-MINIMUM:
+    description: The board runs the expected firmware/BIOS build.
+    verifies: Normalises the BIOS release date reported by the firmware and compares it with the expected date.
+    category: Context
+    remarks: Not emitted when no expected BIOS date is configured; only meaningful on boards that expose a BIOS date.
+    version: 1
+
+  # ─── CPU ──────────────────────────────────────────────────────────────────
+  L-CPU-NPROC:
+    description: The board exposes the expected number of online CPUs.
+    verifies: Compares `nproc` against the configured CPU count (or one of the configured variant counts).
+    category: CPU
+    remarks: Not emitted when no CPU count is configured.
+    version: 1
+  L-CPU-C-STATES:
+    description: The CPU supports the expected cpuidle C-states.
+    verifies: Looks for the configured C-state name under `/sys/devices/system/cpu/cpuN/cpuidle/state*/name`.
+    category: CPU
+    remarks: Emitted once per configured C-state; skipped for CPUs above the matched variant count.
+    version: 1
+  L-CPU-FREQ-SCALING-MIN:
+    description: The CPU frequency scaling lower bound matches the expected value.
+    verifies: Compares `scaling_min_freq` in cpufreq sysfs with the expected frequency.
+    category: CPU
+    remarks: Not emitted when no minimum is configured or cpufreq is absent; skipped for CPUs above the matched variant count.
+    version: 1
+  L-CPU-FREQ-SCALING-MAX:
+    description: The CPU frequency scaling upper bound matches the expected value.
+    verifies: Compares `scaling_max_freq` in cpufreq sysfs with the expected frequency.
+    category: CPU
+    remarks: Not emitted when no maximum is configured or cpufreq is absent; skipped for CPUs above the matched variant count.
+    version: 1
+  L-CPU-SCALING-GOVERNOR:
+    description: The expected cpufreq governors are available for the CPU.
+    verifies: Looks for the configured governor in `scaling_available_governors`.
+    category: CPU
+    remarks: Emitted once per configured governor; not emitted when cpufreq is absent.
+    version: 1
+  L-CPU-SCALING-GOVERNOR-SET-F:
+    description: A cpufreq governor can be activated at runtime with the configured frequency limits.
+    verifies: Runs `cpufreq-set` with the governor and the configured min/max frequencies and checks its exit status.
+    category: CPU
+    remarks: Functional test; skipped when `cpufreq-set` is missing or the frequency limits are not configured.
+    version: 1
+  L-CPU-POWER-STATE-SUSPENSION:
+    description: The kernel offers the expected system suspend states.
+    verifies: Looks for the configured state name in `/sys/power/state`.
+    category: CPU
+    remarks: Emitted once per configured suspension state.
+    version: 1
+
+  # ─── Disk ─────────────────────────────────────────────────────────────────
+  L-DISK-ROOTFS-FOUND:
+    description: The root filesystem is mounted from one of the expected block devices.
+    verifies: Resolves the device backing `/` and looks it up in the configured rootfs mount list.
+    category: Disk
+    remarks: Not emitted when no rootfs mount expectation is configured.
+    version: 1
+  L-DISK-ROOTFS-MODE:
+    description: The root filesystem is mounted with the expected access mode.
+    verifies: Compares the mount mode (`ro`/`rw`) of the root filesystem with the configured mode.
+    category: Disk
+    remarks: Not emitted when no rootfs mount expectation is configured.
+    version: 1
+  L-DISK-DEV:
+    description: The configured storage device node exists and is usable.
+    verifies: Checks that the node is a readable/writable block device and that `fdisk -l` succeeds on it.
+    category: Disk
+    remarks: When this fails the remaining checks for the disk are abandoned.
+    version: 1
+  L-DISK-SECTORS:
+    description: The storage device reports the expected capacity in sectors.
+    verifies: Compares `/sys/block/<dev>/size` with the expected sector count.
+    category: Disk
+    remarks: Not emitted when no sector count is configured.
+    version: 1
+  L-DISK-TYPE:
+    description: The storage device is of the expected type (eMMC, SD, NVMe, SATA, USB …).
+    verifies: Compares the type derived from sysfs and `lsblk -o TRAN` with the expected type.
+    category: Disk
+    remarks: Only evaluated after the device-node check passes.
+    version: 1
+  L-DISK-EXTCSD-READABLE:
+    description: The eMMC extended CSD register block can be read.
+    verifies: Runs `mmc extcsd read <dev>` and checks its exit status.
+    category: Disk
+    remarks: Only applies to eMMC devices; skipped when the `mmc` utility is missing.
+    version: 1
+  L-DISK-READ-THROUGHPUT-F:
+    description: The storage device sustains at least the expected read throughput.
+    verifies: Measures `dd` read throughput from the raw device with caches dropped and compares it with the configured minimum; reports the measurement in MB/s.
+    category: Disk
+    remarks: Functional test; not emitted when no minimum read speed is configured.
+    version: 1
+  L-DISK-WRITE-THROUGHPUT-F:
+    description: The storage device sustains at least the expected write throughput.
+    verifies: Measures `dd` write throughput on a writable partition and compares it with the configured minimum; reports the measurement in MB/s.
+    category: Disk
+    remarks: Functional test; skipped when no writable partition can be mounted and not emitted when no minimum write speed is configured.
+    version: 1
+
+  # ─── Ethernet ─────────────────────────────────────────────────────────────
+  L-ETH-DEV:
+    description: The configured Ethernet interface exists on the target.
+    verifies: Runs `ip addr show <iface>` and requires it to succeed.
+    category: Ethernet
+    remarks: When this fails the remaining checks for the interface are abandoned.
+    version: 1
+  L-ETH-CONTROLLER:
+    description: The Ethernet interface is provided by the expected PCI or SoC controller.
+    verifies: Uses the shared bus helper to locate the configured controller on the PCI or platform bus.
+    category: Ethernet
+    remarks: Not emitted when the bus type or bus id is not configured.
+    version: 1
+  L-ETH-LINK:
+    description: The Ethernet link negotiates the expected speed.
+    verifies: Compares the speed reported by `ethtool` with the configured link speed.
+    category: Ethernet
+    remarks: Requires a connected link partner and `ethtool` on the target; not emitted when no expected speed is configured.
+    version: 1
+  L-ETH-CONFIGURED:
+    description: The Ethernet interface is administratively up.
+    verifies: Checks that the interface flags reported by `ip` contain `UP`.
+    category: Ethernet
+    remarks: When this fails the address and throughput checks for the interface are abandoned.
+    version: 1
+  L-ETH-IPV4-ADDRESS:
+    description: The Ethernet interface has an IPv4 address assigned.
+    verifies: Reads the first `inet` address of the interface from `ip addr show`.
+    category: Ethernet
+    remarks: Requires a DHCP server or static configuration on the attached network.
+    version: 1
+  L-ETH-IPV6-ADDRESS:
+    description: The Ethernet interface has an IPv6 address assigned.
+    verifies: Reads the first non-`/128` `inet6` address of the interface from `ip addr show`.
+    category: Ethernet
+    remarks: Requires IPv6 to be enabled and configured on the attached network.
+    version: 1
+  L-ETH-WAKEUP-FEATURED:
+    description: The Ethernet controller advertises the expected Wake-on-LAN capabilities.
+    verifies: Compares the Wake-on-LAN capability flags reported by `ethtool` with the expected flags.
+    category: Ethernet
+    remarks: Not emitted when no capability is configured or `ethtool` is missing.
+    version: 1
+  L-ETH-WAKEUP-ENABLED:
+    description: Wake-on-LAN is enabled or disabled as expected for the interface.
+    verifies: Compares the device `power/wakeup` sysfs value with the expected value.
+    category: Ethernet
+    remarks: Not emitted when no wakeup expectation is configured or the capability check is not emitted.
+    version: 1
+  L-ETH-TX-THROUGHPUT-F:
+    description: The interface sustains at least the expected transmit throughput.
+    verifies: Runs `iperf3` against the configured server and compares the measured TX rate with the minimum; reports the measurement in Mbps.
+    category: Ethernet
+    remarks: Functional test requiring a reachable `iperf3` server; skipped when the server, an IPv4 address or `iperf3` is missing.
+    version: 1
+  L-ETH-RX-THROUGHPUT-F:
+    description: The interface sustains at least the expected receive throughput.
+    verifies: Runs `iperf3 -R` against the configured server and compares the measured RX rate with the minimum; reports the measurement in Mbps.
+    category: Ethernet
+    remarks: Functional test requiring a reachable `iperf3` server; skipped when the server, an IPv4 address or `iperf3` is missing.
+    version: 1
+  L-DNS-IPV4:
+    description: IPv4 host names can be resolved from the target.
+    verifies: Resolves each configured host name to an A record and requires a non-empty answer.
+    category: Ethernet
+    remarks: Emitted once per configured host; requires a reachable DNS resolver.
+    version: 1
+  L-DNS-IPV6:
+    description: IPv6 host names can be resolved from the target.
+    verifies: Resolves each configured host name to an AAAA record and requires a non-empty answer.
+    category: Ethernet
+    remarks: Emitted once per configured host; requires a reachable IPv6-capable DNS resolver.
+    version: 1
+  L-ETH-IPV4-PING:
+    description: Remote hosts are reachable over IPv4.
+    verifies: Runs `ping -4 -c 1` against each configured host.
+    category: Ethernet
+    remarks: Emitted once per configured host; skipped when no default IPv4 route exists.
+    version: 1
+  L-ETH-IPV6-PING:
+    description: Remote hosts are reachable over IPv6.
+    verifies: Runs `ping -6 -c 1` against each configured host.
+    category: Ethernet
+    remarks: Emitted once per configured host; skipped when no default IPv6 route exists.
+    version: 1
+
+  # ─── GPIO ─────────────────────────────────────────────────────────────────
+  L-GPIO-DEV:
+    description: The GPIO character device node exists and is usable.
+    verifies: Checks that the configured `/dev/gpiochipN` node is a readable/writable character device.
+    category: GPIO
+    remarks: When this fails the remaining checks for the chip are abandoned.
+    version: 1
+  L-GPIO-CHIP:
+    description: The GPIO controller is exposed through the sysfs GPIO class.
+    verifies: Checks that `/sys/class/gpio/<chip>` exists.
+    category: GPIO
+    remarks: Not emitted when no sysfs chip name is configured.
+    version: 1
+  L-GPIO-CONTROLLER:
+    description: The GPIO chip is provided by the expected controller.
+    verifies: Compares `/sys/class/gpio/<chip>/label` with the expected controller name.
+    category: GPIO
+    remarks: Not emitted when no controller name is configured.
+    version: 1
+  L-GPIO-LINES:
+    description: The GPIO chip exposes the expected number of lines.
+    verifies: Compares the line count reported by `gpioinfo` with the expected number of lines.
+    category: GPIO
+    remarks: Not emitted when no line count is configured or `gpioinfo` is missing.
+    version: 1
+  L-GPIO-INPUT:
+    description: A pin configured as an input reports the input direction.
+    verifies: Reads the exported pin's sysfs `direction` file and requires it to read `in`.
+    category: GPIO
+    remarks: Emitted once per configured input pin; pins that cannot be exported produce a warning and no result.
+    version: 1
+  L-GPIO-OUTPUT:
+    description: A pin configured as an output reports the output direction.
+    verifies: Reads the exported pin's sysfs `direction` file and requires it to read `out`.
+    category: GPIO
+    remarks: Emitted once per configured output pin; pins that cannot be exported produce a warning and no result.
+    version: 1
+  L-GPIO-SENSED:
+    description: The level of an input pin can be sensed.
+    verifies: Reads the exported pin's sysfs `value` file and requires a non-empty value.
+    category: GPIO
+    remarks: Only evaluated for input pins whose direction matched.
+    version: 1
+  L-GPIO-SET-HIGH-LOW:
+    description: An output pin can be driven both high and low.
+    verifies: Writes `0` and then `1` to the exported pin's sysfs `value` file, reporting one result per level.
+    category: GPIO
+    remarks: Only evaluated for output pins whose direction matched.
+    version: 1
+  L-GPIO-INT-SOURCE:
+    description: A pin declared as an interrupt source supports edge configuration.
+    verifies: Checks that the exported pin's sysfs `edge` file exists.
+    category: GPIO
+    remarks: Only evaluated for pins configured with an edge suffix.
+    version: 1
+  L-GPIO-INTERRUPT:
+    description: An interrupt pin is configured for the expected edge.
+    verifies: Compares the content of the exported pin's sysfs `edge` file with the configured edge.
+    category: GPIO
+    remarks: Only evaluated for pins configured with an edge suffix.
+    version: 1
+
+  # ─── GPU ──────────────────────────────────────────────────────────────────
+  L-GPU-OPENGL-F:
+    description: Desktop OpenGL is available and renders correctly.
+    verifies: Checks that `libGL.so` is present and that `glmark2 --validate` succeeds.
+    category: GPU
+    remarks: Functional test requiring a display or compositor; the validation result is skipped when `glmark2` is missing.
+    version: 1
+  L-GPU-OPENGL-ES-F:
+    description: OpenGL ES is available and renders correctly.
+    verifies: Checks that `libEGL.so` and `libGLESv2.so` are present and that `glmark2-es2 --validate` succeeds.
+    category: GPU
+    remarks: Functional test requiring a display or compositor; the validation result is skipped when `glmark2-es2` is missing.
+    version: 1
+  L-GPU-WAYLAND:
+    description: The expected Wayland compositor is running.
+    verifies: Checks that the configured `weston` service or `mutter` process is active.
+    category: GPU
+    remarks: Not emitted when no compositor is configured.
+    version: 1
+  L-GPU-VULKAN-DEV:
+    description: A Vulkan-capable device is exposed to user space.
+    verifies: Requires `vulkaninfo` to report a `GPU id` line.
+    category: GPU
+    remarks: Skipped when `vulkaninfo` is not installed.
+    version: 1
+  L-GPU-VA-HW-FFMPEG:
+    description: VA-API hardware acceleration is exposed to FFmpeg.
+    verifies: Requires `ffmpeg -hwaccels` to list `vaapi`.
+    category: GPU
+    remarks: Skipped when `ffmpeg` is not installed.
+    version: 1
+  L-GPU-VA-HW-CODECS:
+    description: The expected VA-API hardware codec profiles are supported.
+    verifies: Looks for each configured codec/entrypoint pair in `vainfo` output.
+    category: GPU
+    remarks: Emitted once per configured codec pair; not emitted when `vainfo` is missing.
+    version: 1
+  L-GPU-DRI-KMS-DEV:
+    description: The DRI/KMS device node exists and is usable.
+    verifies: Checks that the configured `/dev/dri/*` node is a readable/writable character device.
+    category: GPU
+    remarks: Not emitted when no DRI/KMS device is configured.
+    version: 1
+  L-GPU-DRM-LVDS-MODULE:
+    description: The LVDS panel driver module is loaded.
+    verifies: Looks for the configured module name in `lsmod` output.
+    category: GPU
+    remarks: Not emitted when no LVDS module is configured.
+    version: 1
+  L-GPU-DRM-LVDS-DEV:
+    description: The LVDS panel is bound to a DRM device.
+    verifies: Checks that the `device` entry below the configured LVDS sysfs path exists.
+    category: GPU
+    remarks: Not emitted when no LVDS device is configured.
+    version: 1
+  L-GPU-DRM-LVDS-ENABLED:
+    description: The LVDS panel is enabled.
+    verifies: Requires the `enabled` entry below the configured LVDS sysfs path to read `enabled`.
+    category: GPU
+    remarks: Not emitted when no LVDS device is configured.
+    version: 1
+  L-GPU-DRM-CONNECTOR:
+    description: The expected DRM connector is present.
+    verifies: Requires `modetest -c` to report a positive connector id for the configured connector.
+    category: GPU
+    remarks: Requires an attached display; not emitted when `modetest` is missing.
+    version: 1
+  L-GPU-DRM-CONNECTOR-ENCODER:
+    description: The DRM connector uses the expected encoder.
+    verifies: Looks for the configured encoder in `modetest -e` output.
+    category: GPU
+    remarks: Not emitted when the connector check is not emitted or `modetest` is missing.
+    version: 1
+  L-GPU-DRM-CONNECTOR-RESOLUTION:
+    description: The attached display runs at the expected resolution.
+    verifies: Compares the resolution reported by `hwinfo --monitor` with the expected value.
+    category: GPU
+    remarks: Requires an attached display and `hwinfo`.
+    version: 1
+  L-GPU-DRM-CONNECTOR-REFRESH-RATE:
+    description: The attached display runs at the expected refresh rate.
+    verifies: Compares the refresh rate reported by `hwinfo --monitor` with the expected value.
+    category: GPU
+    remarks: Requires an attached display and `hwinfo`.
+    version: 1
+  L-GPU-BACKLIGHT-DEV:
+    description: The backlight device is exposed through sysfs.
+    verifies: Checks that the `device` entry below the configured backlight sysfs path exists.
+    category: GPU
+    remarks: When this fails the remaining backlight checks for the instance are abandoned.
+    version: 1
+  L-GPU-BACKLIGHT-F:
+    description: Backlight brightness can be read and lies within the supported range.
+    verifies: Reads `brightness` and `max_brightness` and requires the current value to be numeric and within `0..max_brightness`.
+    category: GPU
+    remarks: Functional test; only evaluated after the backlight device check passes.
+    version: 1
+  L-GPU-BACKLIGHT-RESTORE-F:
+    description: Backlight brightness is restored to its original value after being changed.
+    verifies: Sweeps the brightness, writes the original value back and compares the value read afterwards.
+    category: GPU
+    remarks: Functional test; only evaluated after the backlight brightness check passes.
+    version: 1
+
+  # ─── I2C ──────────────────────────────────────────────────────────────────
+  L-I2C-DEV:
+    description: The configured I2C bus device node exists and is usable.
+    verifies: Checks that the configured `/dev/i2c-N` node is a readable/writable character device.
+    category: I2C
+    remarks: When this fails the remaining checks for the bus are abandoned.
+    version: 1
+  L-I2C-CONTROLLER:
+    description: The I2C bus is provided by the expected adapter/controller.
+    verifies: Looks for the bus in `i2cdetect -l` output and matches the expected controller name.
+    category: I2C
+    remarks: Skipped when `i2cdetect` is missing; not emitted when no controller name is configured.
+    version: 1
+
+  # ─── NPU ──────────────────────────────────────────────────────────────────
+  L-NPU-DEV:
+    description: The NPU device node exists and is usable.
+    verifies: Checks that the configured NPU node is a readable/writable character device.
+    category: NPU
+    remarks: Not emitted when no NPU device is configured.
+    version: 1
+  L-NPU-CONTROLLER:
+    description: The NPU is provided by the expected PCI or SoC controller.
+    verifies: Uses the shared bus helper to locate the configured controller on the PCI or platform bus.
+    category: NPU
+    remarks: Not emitted when the bus type or bus id is not configured.
+    version: 1
+
+  # ─── OP-TEE ───────────────────────────────────────────────────────────────
+  L-OPTEE-DEV:
+    description: The OP-TEE trusted-execution device node exists and is usable.
+    verifies: Checks that the configured OP-TEE node is a readable/writable character device.
+    category: OP-TEE
+    remarks: When this fails the `xtest` regression is not attempted.
+    version: 1
+  L-OPTEE-XTEST-F:
+    description: The OP-TEE regression suite passes on the target.
+    verifies: Runs `xtest` in the configured quick or full mode and checks its exit status.
+    category: OP-TEE
+    remarks: Functional test; skipped when `xtest` is not installed.
+    version: 1
+
+  # ─── PWM ──────────────────────────────────────────────────────────────────
+  L-PWM-DEV:
+    description: The PWM chip is exposed through the sysfs PWM class.
+    verifies: Checks that `/sys/class/pwm/<chip>` exists.
+    category: PWM
+    remarks: Emitted for every configured PWM instance.
+    version: 1
+  L-PWM-CONTROLLER:
+    description: The PWM chip is provided by the expected PCI or SoC controller.
+    verifies: Uses the shared bus helper to locate the configured controller on the PCI or platform bus.
+    category: PWM
+    remarks: Not emitted when the bus type or bus id is not configured.
+    version: 1
+  L-PWM-BACKLIGHT-BRIGHTNESS-DEV:
+    description: The PWM-driven backlight brightness control is exposed through sysfs.
+    verifies: Checks that the configured backlight brightness path exists.
+    category: PWM
+    remarks: Not emitted when no PWM backlight device is configured.
+    version: 1
+
+  # ─── RAM ──────────────────────────────────────────────────────────────────
+  L-RAM-SIZE:
+    description: The memory slot is populated with the expected amount of RAM.
+    verifies: Compares the physical memory size reported by `dmidecode` or `/proc/iomem` with the expected size.
+    category: RAM
+    remarks: Not emitted when no slot size is configured.
+    version: 1
+  L-RAM-SPEED:
+    description: The installed memory runs at the expected speed.
+    verifies: Compares the configured memory speed in MT/s reported by `dmidecode` with the expected value.
+    category: RAM
+    remarks: Requires `dmidecode`; not emitted when no slot speed is configured.
+    version: 1
+  L-RAM-AVAILABLE-MIN:
+    description: At least the expected amount of memory is available to the operating system.
+    verifies: Compares `MemTotal` in `/proc/meminfo` with the configured minimum.
+    category: RAM
+    remarks: Not emitted when no minimum available memory is configured.
+    version: 1
+  L-RAM-AVAILABLE-TOTAL:
+    description: The total memory available to the operating system is recorded.
+    verifies: Reports `MemTotal` from `/proc/meminfo` as a measurement in MiB.
+    category: RAM
+    remarks: Informational measurement, always reported as pass.
+    version: 1
+  L-RAM-STABILITY-F:
+    description: Memory is stable under a sustained read/write stress test.
+    verifies: Runs `memtester` over the computed test size and checks its exit status.
+    category: RAM
+    remarks: Functional test; skipped when `memtester` is not installed or the computed test size is zero.
+    version: 1
+
+  # ─── RTC ──────────────────────────────────────────────────────────────────
+  L-RTC-DEFAULT:
+    description: The default `/dev/rtc` alias exists and is usable.
+    verifies: Checks that `/dev/rtc` is a readable/writable character device.
+    category: RTC
+    remarks: Always emitted by the RTC module.
+    version: 1
+  L-RTC-DEV:
+    description: The configured RTC device node exists and is usable.
+    verifies: Checks that the configured `/dev/rtcN` node is a readable/writable character device.
+    category: RTC
+    remarks: When this fails the remaining checks for the RTC are abandoned.
+    version: 1
+  L-RTC-GET-F:
+    description: The current time can be read from the RTC.
+    verifies: Runs `hwclock --rtc <dev> --get` and requires non-empty output.
+    category: RTC
+    remarks: Functional test; when it fails the set and wakeup checks for the RTC are abandoned.
+    version: 1
+  L-RTC-SET-F:
+    description: The time can be written to the RTC.
+    verifies: Runs `hwclock --rtc <dev> --set --date <time>` with the previously read time and checks its exit status.
+    category: RTC
+    remarks: Functional test; only evaluated after the RTC read check passes.
+    version: 1
+  L-RTC-WAKEUP:
+    description: The RTC wakeup capability is enabled or disabled as expected.
+    verifies: Compares the RTC `device/power/wakeup` sysfs value with the expected value, treating a missing file as `disabled`.
+    category: RTC
+    remarks: Only evaluated after the RTC read check passes.
+    version: 1
+  L-SUSPEND-WAKEUP-F:
+    description: The board suspends and is woken by the RTC alarm after the configured interval.
+    verifies: Runs `rtcwake` for the configured sleep time and compares the elapsed wall-clock time; reports the measurement in seconds.
+    category: RTC
+    remarks: Functional and disruptive test; runs from its own LAVA job and is skipped when the RTC device does not exist.
+    version: 1
+
+  # ─── SPI ──────────────────────────────────────────────────────────────────
+  L-SPI-DEV:
+    description: The spidev device node exists and is usable.
+    verifies: Checks that the configured `/dev/spidevX.Y` node is a readable/writable character device.
+    category: SPI
+    remarks: When this fails the loopback test for the device is abandoned.
+    version: 1
+  L-SPI-DEV-TEST-F:
+    description: A SPI transfer completes successfully in loopback.
+    verifies: Runs `spidev_test -D <device>` and checks its exit status.
+    category: SPI
+    remarks: Functional test requiring MOSI/MISO to be wired together; skipped when `spidev_test` is missing.
+    version: 1
+
+  # ─── Thermal ──────────────────────────────────────────────────────────────
+  L-THERMAL-ZONE-DEV:
+    description: The thermal zone is exposed through sysfs.
+    verifies: Checks that `/sys/class/thermal/<zone>/temp` exists.
+    category: Thermal
+    remarks: When this fails the remaining checks for the zone are abandoned.
+    version: 1
+  L-THERMAL-ZONE-MIN:
+    description: The thermal zone temperature is at or above the expected lower bound.
+    verifies: Compares the temperature read from the zone with the configured minimum.
+    category: Thermal
+    remarks: A reading below the bound usually indicates a mis-mapped or unpowered sensor.
+    version: 1
+  L-THERMAL-ZONE-MAX:
+    description: The thermal zone temperature is at or below the expected upper bound.
+    verifies: Compares the temperature read from the zone with the configured maximum.
+    category: Thermal
+    remarks: A reading above the bound indicates insufficient cooling or a mis-mapped sensor.
+    version: 1
+  L-THERMAL-ZONE-TEMP:
+    description: The current thermal zone temperature is recorded.
+    verifies: Reports the zone temperature as a measurement in °C.
+    category: Thermal
+    remarks: Informational measurement; not emitted when the zone check failed.
+    version: 1
+
+  # ─── TPM ──────────────────────────────────────────────────────────────────
+  L-TPM-DEV:
+    description: The TPM device node exists and is usable.
+    verifies: Checks that the configured TPM node is a readable/writable character device.
+    category: TPM
+    remarks: When this fails the remaining checks for the TPM are abandoned.
+    version: 1
+  L-TPM-SELF-TEST-F:
+    description: The TPM passes its internal self-test.
+    verifies: Runs `tpm_selftest -f` or `tpm2_selftest -f` and checks its exit status.
+    category: TPM
+    remarks: Functional test; skipped when the matching self-test tool is missing.
+    version: 1
+  L-TPM-CONTROLLER:
+    description: The TPM is manufactured by the expected vendor.
+    verifies: Compares the concatenated TPM 2.0 vendor strings from `tpm2_getcap` with the expected manufacturer.
+    category: TPM
+    remarks: TPM 2.0 only; not emitted for TPM 1.x or when `tpm2_getcap` is missing.
+    version: 1
+  L-TPM-CAPABILITIES:
+    description: The TPM advertises the expected capabilities.
+    verifies: Looks for each configured capability in `tpm2_getcap -l` output.
+    category: TPM
+    remarks: Emitted once per configured capability; TPM 2.0 only and skipped when `tpm2_getcap` is missing.
+    version: 1
+  L-TPM-PCR-READABLE-F:
+    description: The TPM platform configuration registers can be read.
+    verifies: Requires `tpm2_pcrread` output to contain a `0:` PCR bank entry.
+    category: TPM
+    remarks: Functional test; TPM 2.0 only and skipped when `tpm2_pcrread` is missing.
+    version: 1
+
+  # ─── UART ─────────────────────────────────────────────────────────────────
+  L-UART-DEV:
+    description: The configured UART device node exists and is usable.
+    verifies: Checks that the configured serial node is a readable/writable character device.
+    category: UART
+    remarks: When this fails the remaining checks for the UART are abandoned.
+    version: 1
+  L-UART-CONTROLLER:
+    description: The UART is provided by the expected PCI or SoC controller.
+    verifies: Uses the shared bus helper to locate the configured controller on the PCI or platform bus.
+    category: UART
+    remarks: Not emitted when the bus type or bus id is not configured.
+    version: 1
+  L-UART-CONFIGURE-F:
+    description: The UART line settings can be queried and configured.
+    verifies: Runs `stty -F <device>` and the loopback line configuration and checks their exit status.
+    category: UART
+    remarks: Functional test; not emitted when the device-node check failed.
+    version: 1
+  L-UART-HWFC:
+    description: Hardware flow control is available on the UART when required.
+    verifies: Sets `crtscts` with `stty` and confirms it appears in `stty -a` output; passes immediately when flow control is not requested.
+    category: UART
+    remarks: Requires RTS/CTS to be wired when hardware flow control is requested.
+    version: 1
+  L-UART-DEBUG-CONSOLE:
+    description: The UART designated as debug console is the one used by the kernel.
+    verifies: Compares the kernel `console=` device from the boot command line with the configured device; passes immediately when no debug console is requested.
+    category: UART
+    remarks: Not emitted when the device-node check failed.
+    version: 1
+  L-UART-LOOPBACK-F:
+    description: Data sent on the UART is received back over the configured loopback wiring.
+    verifies: Writes a test pattern to the device and compares the data read back.
+    category: UART
+    remarks: Functional test requiring 2-wire or 4-wire loopback wiring; skipped when no loopback is configured.
+    version: 1
+
+  # ─── USB ──────────────────────────────────────────────────────────────────
+  L-USB-HOST-DEV:
+    description: The USB host controller enumerates at least one device.
+    verifies: Requires `lsusb` to report at least one device line.
+    category: USB
+    remarks: Skipped when `lsusb` is not installed.
+    version: 1
+  L-USB-PLUGGED-DEV-F:
+    description: The device plugged into the configured USB port enumerates with the expected driver and speed.
+    verifies: Looks for a non-root, non-hub interface on the configured port in `lsusb -t` output and matches driver and speed.
+    category: USB
+    remarks: Functional test requiring a device plugged into the port; skipped when the port, driver, speed or `lsusb` is missing.
+    version: 1
+  L-USB-OTG-CONF:
+    description: The kernel is built with the USB OTG/gadget options required by the board.
+    verifies: Requires the configured kernel config key to be set to `y` or `m` in `/proc/config.gz` or `/boot/config-$(uname -r)`.
+    category: USB
+    remarks: Emitted once per configured kernel config key; only emitted when OTG support is enabled for the board.
+    version: 1
+  L-USB-OTG-ETH-F:
+    description: The USB gadget Ethernet function works over the OTG port.
+    verifies: Placeholder for a functional gadget Ethernet run; currently always reported as skip.
+    category: USB
+    remarks: Functional test requiring an attached USB host; reported as skip until such a fixture exists.
+    version: 1
+
+  # ─── Watchdog ─────────────────────────────────────────────────────────────
+  L-WATCHDOG-DEV:
+    description: The watchdog device node exists and is usable.
+    verifies: Checks that the configured `/dev/watchdogN` node is a readable/writable character device.
+    category: Watchdog
+    remarks: Emitted for every configured watchdog instance.
+    version: 1
+  L-WATCHDOG-SERVICE:
+    description: A watchdog daemon is running and keeping the timer alive.
+    verifies: Requires `pgrep watchdog` to find a running daemon.
+    category: Watchdog
+    remarks: Not applicable to images that arm the watchdog from the kernel only.
+    version: 1
+  L-WATCHDOG-REBOOT-F:
+    description: The watchdog resets the board when it is no longer serviced.
+    verifies: Opens the watchdog device, stops servicing it and expects the board to reboot before the timeout elapses.
+    category: Watchdog
+    remarks: Functional and disruptive test; runs from its own LAVA job and is skipped when the watchdog device does not exist.
+    version: 1
