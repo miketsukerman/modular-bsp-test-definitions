@@ -16,6 +16,10 @@
 # Copyright (c) 2024 Advantech Co., Ltd. All rights reserved
 #
 
+# 'local' is not POSIX, but every shell used on the targets (dash, busybox ash,
+# bash) implements it.
+# shellcheck disable=SC3043
+
 RESULT_FILE="$1"
 RESULT_DIR="$2"
 if [ -z "${RESULT_DIR}" ]; then

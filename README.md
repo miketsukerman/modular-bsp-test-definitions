@@ -19,6 +19,7 @@ that are captured and surfaced by LAVA.
 ## Repository layout
 
 ```
+.github/workflows/checks.yml   # CI: shellcheck, yamllint and consistency checks
 requirements.yaml              # Test-case description metadata (see below)
 automated/linux/
 ├── lib/
@@ -27,7 +28,8 @@ automated/linux/
 │   └── send-to-lava.sh        # Translates result.txt into LAVA signals
 ├── tools/
 │   ├── conf_to_yaml.py        # Generates per-module params YAML from a board .conf
-│   └── check_requirements.py  # Checks requirements.yaml against the emitted IDs
+│   ├── check_requirements.py  # Checks requirements.yaml against the emitted IDs
+│   └── check_docs.py          # Checks the docs against the repository contents
 ├── audio/   (audio.sh   + audio.yaml)
 ├── can/     (can.sh     + can.yaml)
 ├── context/ (context.sh + context.yaml)
@@ -261,6 +263,47 @@ An alternative to the shared catalogue is a `metadata.test_cases:` block inside
 a single module YAML, which overrides the catalogue for that suite only. It is
 deliberately unused here: it adds a non-standard key to a *Lava-Test Test
 Definition 1.0* document and scatters the metadata across the module files.
+
+## Continuous integration
+
+[`.github/workflows/checks.yml`](.github/workflows/checks.yml) runs on every
+push to `main` and on every pull request, and can also be started manually. It
+runs the same checks you can run locally:
+
+| Job | Command | What it guards |
+|-----|---------|----------------|
+| `shellcheck` | `shellcheck --severity=warning automated/linux/*/*.sh` | The module scripts and the shared library stay lint-clean. [`.shellcheckrc`](.shellcheckrc) points shellcheck at `lib/adv-test-lib.sh` so sourced helpers are followed. |
+| `yamllint` | `yamllint --strict requirements.yaml automated/linux/*/*.yaml` | The test definitions and the catalogue stay valid, consistently formatted YAML. Rules live in [`.yamllint`](.yamllint). |
+| `consistency` | `check_requirements.py` and `check_docs.py` | The catalogue and the documentation stay in sync with the modules (see below). |
+
+### Keeping the documentation in sync
+
+`tools/check_docs.py` compares the documentation with the repository contents:
+
+```sh
+python3 automated/linux/tools/check_docs.py
+```
+
+It exits non-zero when
+
+* a module has no suite document under `docs/tests/`, or a suite document has
+  no module;
+* a module is missing from the *Test modules at a glance* table in this file or
+  from the suite table in `docs/tests/README.md`, or those tables name a
+  definition file that does not exist or a LAVA name that differs from the
+  YAML `metadata.name`;
+* a module ships a `*.yaml` without its `*.sh` (or vice versa), or a module
+  YAML's `run` steps `cd` into the wrong directory;
+* a suite document's *Test cases* table misses a test-case ID the module's
+  scripts can emit, or describes one they cannot;
+* the [test-case ID index](docs/tests/README.md#test-case-id-index) misses an
+  emitted ID, lists an ID no module emits, or attributes an ID to the wrong
+  suite;
+* a relative Markdown link points at a missing file or heading.
+
+Test-case IDs are compared in their base form, so `L-I2C-DEV-i2c${n}`,
+`L-I2C-DEV-${label}` and `L-I2C-DEV-i2c{N}` all match the `L-I2C-DEV` the
+script emits.
 
 ## Supported OS / scope
 
