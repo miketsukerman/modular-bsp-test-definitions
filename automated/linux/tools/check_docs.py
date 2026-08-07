@@ -346,6 +346,8 @@ def check_links(repo_root: str, findings: List[str]) -> None:
                         or target.startswith("#"):
                     continue
                 file_part, _, fragment = target.partition("#")
+                if not file_part:
+                    continue
                 dest = os.path.normpath(
                     os.path.join(os.path.dirname(path), file_part))
                 if not os.path.exists(dest):
