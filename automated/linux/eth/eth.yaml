@@ -33,7 +33,8 @@ params:
   IPERF3_DURATION: "5"         # iperf3 test duration in seconds
 
   DNS_CHECK_HOSTS: "google.com"   # Space-separated hostnames
-  PING_CHECK_HOSTS: "google.com"  # Space-separated hostnames
+  PING_CHECK_HOSTS: "google.com"  # Space-separated hostnames for IPv4 ping
+  PING_IPV6_HOSTS: ""             # Space-separated hostnames for IPv6 ping (empty = skip IPv6 ping checks)
   VERBOSE: "0"            # Set to "1" to enable verbose diagnostic logs
 
 run:

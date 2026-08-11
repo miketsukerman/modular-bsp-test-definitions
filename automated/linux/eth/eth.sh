@@ -19,6 +19,7 @@ create_out_dir
 : "${IPERF3_DURATION:=5}"
 : "${DNS_CHECK_HOSTS:=advantech.com google.com}"
 : "${PING_CHECK_HOSTS:=advantech.com google.com}"
+: "${PING_IPV6_HOSTS:=}"
 
 # Determine whether default routes exist before external ping checks.
 has_default_v4=0
@@ -252,4 +253,18 @@ for host in ${PING_CHECK_HOSTS}; do
             report_fail "L-ETH-IPV${proto}-PING"
         fi
     done
+done
+
+for host in ${PING_IPV6_HOSTS}; do
+    if [ "${has_default_v6}" -ne 1 ]; then
+        verbose_log "L-ETH-IPV6-PING" "Skipping IPv6 ping to ${host}: no default IPv6 route"
+        report_skip "L-ETH-IPV6-PING"
+        continue
+    fi
+    verbose_log "L-ETH-IPV6-PING" "Pinging ${host} over IPv6"
+    if ping -6 -c 1 "${host}" >/dev/null 2>&1; then
+        report_pass "L-ETH-IPV6-PING"
+    else
+        report_fail "L-ETH-IPV6-PING"
+    fi
 done

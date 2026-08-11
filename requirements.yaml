@@ -297,7 +297,7 @@ requirements:
     description: Remote hosts are reachable over IPv6.
     verifies: Runs `ping -6 -c 1` against each configured host.
     category: Ethernet
-    remarks: Emitted once per configured host; skipped when no default IPv6 route exists.
+    remarks: Emitted once per configured host; skipped when no default IPv6 route exists or no IPv6 ping hosts are configured.
     version: 1
 
   # ─── GPIO ─────────────────────────────────────────────────────────────────
