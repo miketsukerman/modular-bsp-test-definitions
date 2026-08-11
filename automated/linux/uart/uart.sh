@@ -81,8 +81,11 @@ while [ "${n}" -lt "${UART_COUNT}" ]; do
 
     # Debug console
     if [ "${dconsole}" = "1" ] || [ "${dconsole}" = "y" ]; then
-        dc=$(journalctl -b 2>/dev/null | grep command.line |
-             grep console= | awk -F'console=' '{print $2}' | awk -F, '{print $1}')
+        dc=$(journalctl -b 2>/dev/null |
+             sed -n 's/.*command line: //p' | head -1 |
+             tr ' ' '\n' | sed -n 's/^console=//p' | head -1 |
+             awk -F, '{print $1}')
+        dc=${dc#/dev/}
         dt="/dev/${dc}"
         verbose_log "${req_dbg}" "Debug console: kernel cmdline says '${dt}' expected '${dev}'"
         if [ "${dev}" = "${dt}" ]; then
