@@ -50,7 +50,7 @@ DNS resolution, and ping connectivity.
 | `IPERF3_SERVER_IP` | `""` | Host-side `iperf3` server IP; empty = throughput results are skipped |
 | `IPERF3_DURATION` | `"5"` | `iperf3` duration in seconds |
 | `DNS_CHECK_HOSTS` | `"advantech.com google.com"` | Space-separated hostnames for A and AAAA lookup checks |
-| `PING_CHECK_HOSTS` | `"advantech.com google.com"` | Space-separated hostnames for IPv4 ping checks |
+| `PING_IPV4_HOSTS` | `"advantech.com google.com"` | Space-separated hostnames for IPv4 ping checks; empty = skip IPv4 ping validation |
 | `PING_IPV6_HOSTS` | `""` | Space-separated hostnames for IPv6 ping checks; empty = skip IPv6 ping validation |
 | `VERBOSE` | `"0"` | `"1"` enables per-test-case diagnostic logs |
 
@@ -76,7 +76,7 @@ IDs are shown in sanitised (LAVA) form. `${label}` is `eth<N>` for interface
 | `L-ETH-RX-THROUGHPUT-F-${label}` | ✓ | `iperf3 -R` RX throughput is at least `ETH{N}_MIN_RX_SPEED`; reports metric in `Mbps` | Measured RX throughput is below the threshold or unparsable; reports metric in `Mbps` | Skip when `IPERF3_SERVER_IP` is empty, no IPv4 address exists, `iperf3` is missing, or min speed is `0` |
 | `L-DNS-IPV4` | | A record lookup returns a value (emitted once per `DNS_CHECK_HOSTS` entry) | Lookup returns no value | Not emitted when `DNS_CHECK_HOSTS` is empty |
 | `L-DNS-IPV6` | | AAAA record lookup returns a value (emitted once per `DNS_CHECK_HOSTS` entry) | Lookup returns no value | Not emitted when `DNS_CHECK_HOSTS` is empty |
-| `L-ETH-IPV4-PING` | | `ping -4 -c 1` succeeds (emitted once per `PING_CHECK_HOSTS` entry) | Ping fails | Not emitted when `PING_CHECK_HOSTS` is empty |
+| `L-ETH-IPV4-PING` | | `ping -4 -c 1` succeeds (emitted once per `PING_IPV4_HOSTS` entry) | Ping fails | Not emitted when `PING_IPV4_HOSTS` is empty |
 | `L-ETH-IPV6-PING` | | `ping -6 -c 1` succeeds (emitted once per `PING_IPV6_HOSTS` entry) | Ping fails | Skip when no default IPv6 route exists, or not emitted when `PING_IPV6_HOSTS` is empty |
 
 The throughput checks use `report_metric`, so LAVA receives the integer

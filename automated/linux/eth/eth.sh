@@ -18,8 +18,18 @@ create_out_dir
 : "${IPERF3_SERVER_IP:=}"
 : "${IPERF3_DURATION:=5}"
 : "${DNS_CHECK_HOSTS:=advantech.com google.com}"
-: "${PING_CHECK_HOSTS:=advantech.com google.com}"
-: "${PING_IPV6_HOSTS:=}"
+
+if [ -z "${PING_IPV4_HOSTS+x}" ]; then
+    if [ -n "${PING_CHECK_HOSTS+x}" ]; then
+        PING_IPV4_HOSTS="${PING_CHECK_HOSTS}"
+    else
+        PING_IPV4_HOSTS="advantech.com google.com"
+    fi
+fi
+
+if [ -z "${PING_IPV6_HOSTS+x}" ]; then
+    PING_IPV6_HOSTS=""
+fi
 
 # Determine whether default routes exist before external ping checks.
 has_default_v4=0
@@ -234,25 +244,18 @@ for host in ${DNS_CHECK_HOSTS}; do
     done
 done
 
-for host in ${PING_CHECK_HOSTS}; do
-    for proto in 4 6; do
-        if [ "${proto}" = "4" ] && [ "${has_default_v4}" -ne 1 ]; then
-            verbose_log "L-ETH-IPV${proto}-PING" "Skipping IPv4 ping to ${host}: no default IPv4 route"
-            report_skip "L-ETH-IPV${proto}-PING"
-            continue
-        fi
-        if [ "${proto}" = "6" ] && [ "${has_default_v6}" -ne 1 ]; then
-            verbose_log "L-ETH-IPV${proto}-PING" "Skipping IPv6 ping to ${host}: no default IPv6 route"
-            report_skip "L-ETH-IPV${proto}-PING"
-            continue
-        fi
-        verbose_log "L-ETH-IPV${proto}-PING" "Pinging ${host} over IPv${proto}"
-        if ping "-${proto}" -c 1 "${host}" >/dev/null 2>&1; then
-            report_pass "L-ETH-IPV${proto}-PING"
-        else
-            report_fail "L-ETH-IPV${proto}-PING"
-        fi
-    done
+for host in ${PING_IPV4_HOSTS}; do
+    if [ "${has_default_v4}" -ne 1 ]; then
+        verbose_log "L-ETH-IPV4-PING" "Skipping IPv4 ping to ${host}: no default IPv4 route"
+        report_skip "L-ETH-IPV4-PING"
+        continue
+    fi
+    verbose_log "L-ETH-IPV4-PING" "Pinging ${host} over IPv4"
+    if ping -4 -c 1 "${host}" >/dev/null 2>&1; then
+        report_pass "L-ETH-IPV4-PING"
+    else
+        report_fail "L-ETH-IPV4-PING"
+    fi
 done
 
 for host in ${PING_IPV6_HOSTS}; do

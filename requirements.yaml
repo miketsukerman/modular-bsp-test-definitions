@@ -291,7 +291,7 @@ requirements:
     description: Remote hosts are reachable over IPv4.
     verifies: Runs `ping -4 -c 1` against each configured host.
     category: Ethernet
-    remarks: Emitted once per configured host; skipped when no default IPv4 route exists.
+    remarks: Emitted once per configured host; skipped when no default IPv4 route exists or no IPv4 ping hosts are configured.
     version: 1
   L-ETH-IPV6-PING:
     description: Remote hosts are reachable over IPv6.
