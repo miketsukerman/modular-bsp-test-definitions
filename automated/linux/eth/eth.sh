@@ -244,30 +244,38 @@ for host in ${DNS_CHECK_HOSTS}; do
     done
 done
 
-for host in ${PING_IPV4_HOSTS}; do
-    if [ "${has_default_v4}" -ne 1 ]; then
-        verbose_log "L-ETH-IPV4-PING" "Skipping IPv4 ping to ${host}: no default IPv4 route"
-        report_skip "L-ETH-IPV4-PING"
-        continue
-    fi
-    verbose_log "L-ETH-IPV4-PING" "Pinging ${host} over IPv4"
-    if ping -4 -c 1 "${host}" >/dev/null 2>&1; then
-        report_pass "L-ETH-IPV4-PING"
-    else
-        report_fail "L-ETH-IPV4-PING"
-    fi
-done
+if [ -z "${PING_IPV4_HOSTS}" ]; then
+    report_skip "L-ETH-IPV4-PING"
+else
+    for host in ${PING_IPV4_HOSTS}; do
+        if [ "${has_default_v4}" -ne 1 ]; then
+            verbose_log "L-ETH-IPV4-PING" "Skipping IPv4 ping to ${host}: no default IPv4 route"
+            report_skip "L-ETH-IPV4-PING"
+            continue
+        fi
+        verbose_log "L-ETH-IPV4-PING" "Pinging ${host} over IPv4"
+        if ping -4 -c 1 "${host}" >/dev/null 2>&1; then
+            report_pass "L-ETH-IPV4-PING"
+        else
+            report_fail "L-ETH-IPV4-PING"
+        fi
+    done
+fi
 
-for host in ${PING_IPV6_HOSTS}; do
-    if [ "${has_default_v6}" -ne 1 ]; then
-        verbose_log "L-ETH-IPV6-PING" "Skipping IPv6 ping to ${host}: no default IPv6 route"
-        report_skip "L-ETH-IPV6-PING"
-        continue
-    fi
-    verbose_log "L-ETH-IPV6-PING" "Pinging ${host} over IPv6"
-    if ping -6 -c 1 "${host}" >/dev/null 2>&1; then
-        report_pass "L-ETH-IPV6-PING"
-    else
-        report_fail "L-ETH-IPV6-PING"
-    fi
-done
+if [ -z "${PING_IPV6_HOSTS}" ]; then
+    report_skip "L-ETH-IPV6-PING"
+else
+    for host in ${PING_IPV6_HOSTS}; do
+        if [ "${has_default_v6}" -ne 1 ]; then
+            verbose_log "L-ETH-IPV6-PING" "Skipping IPv6 ping to ${host}: no default IPv6 route"
+            report_skip "L-ETH-IPV6-PING"
+            continue
+        fi
+        verbose_log "L-ETH-IPV6-PING" "Pinging ${host} over IPv6"
+        if ping -6 -c 1 "${host}" >/dev/null 2>&1; then
+            report_pass "L-ETH-IPV6-PING"
+        else
+            report_fail "L-ETH-IPV6-PING"
+        fi
+    done
+fi
